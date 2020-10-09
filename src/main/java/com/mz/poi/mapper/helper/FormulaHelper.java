@@ -1,5 +1,6 @@
 package com.mz.poi.mapper.helper;
 
+import com.mz.poi.mapper.exception.ExcelGenerateException;
 import com.mz.poi.mapper.structure.ExcelStructure.RowStructure;
 import com.mz.poi.mapper.structure.ExcelStructure.SheetStructure;
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ public class FormulaHelper {
           cellAddress = this.getIndexedDataRowCellAddress(sheetStructure, addressStr);
         }
         String finalAddress = cellAddress.orElseThrow(() ->
-            new IllegalArgumentException(String.format("Not found cellAddress %s", addressStr)));
+            new ExcelGenerateException(String.format("Not found cellAddress %s", addressStr)));
         item.formula = item.formula.replace(addressToReplace, finalAddress);
       }
       item.getCell().setCellFormula(item.getFormula());
@@ -100,7 +101,7 @@ public class FormulaHelper {
         rowNum = dataStartNum + at;
       }
       if (!matched) {
-        throw new IllegalArgumentException(String.format("Invalid formula pattern %s", addressStr));
+        throw new ExcelGenerateException(String.format("Invalid formula pattern %s", addressStr));
       }
     }
 

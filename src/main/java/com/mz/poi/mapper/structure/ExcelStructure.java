@@ -5,6 +5,7 @@ import com.mz.poi.mapper.annotation.DataRows;
 import com.mz.poi.mapper.annotation.Excel;
 import com.mz.poi.mapper.annotation.Row;
 import com.mz.poi.mapper.annotation.Sheet;
+import com.mz.poi.mapper.exception.ExcelStructureException;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class ExcelStructure {
           .filter(rowStructure -> rowStructure.fieldName.equals(fieldName))
           .findAny()
           .orElseThrow(() ->
-              new IllegalArgumentException(String.format("%s row not founded", fieldName))
+              new ExcelStructureException(String.format("%s row not founded", fieldName))
           );
     }
 
@@ -58,7 +59,7 @@ public class ExcelStructure {
               rowStructure.startRowNum <= rowNum && rowStructure.endRowNum >= rowNum)
           .findAny()
           .orElseThrow(() ->
-              new IllegalArgumentException(String.format("row of index %s not founded", rowNum))
+              new ExcelStructureException(String.format("row of index %s not founded", rowNum))
           );
     }
 
@@ -84,7 +85,7 @@ public class ExcelStructure {
           })
           .findFirst()
           .orElseThrow(() ->
-              new IllegalArgumentException("not found nextRowStructure")
+              new ExcelStructureException("not found nextRowStructure")
           );
     }
 
@@ -159,7 +160,8 @@ public class ExcelStructure {
     this.dtoType = dtoType;
     Excel excel = dtoType.getAnnotation(Excel.class);
     if (excel == null) {
-      throw new IllegalArgumentException("not found excel annotation");
+      throw new ExcelStructureException(
+          String.format("not found excel annotation at %s", dtoType.getName()));
     }
     this.setAnnotation(new ExcelAnnotation(excel));
 

@@ -5,6 +5,7 @@ import com.mz.poi.mapper.annotation.ColumnWidth;
 import com.mz.poi.mapper.annotation.Excel;
 import com.mz.poi.mapper.annotation.Font;
 import com.mz.poi.mapper.annotation.Sheet;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,22 +15,24 @@ import lombok.Setter;
 @NoArgsConstructor
 @Excel(
     defaultStyle = @CellStyle(
-        font = @Font(fontName = "나눔고딕")
+        font = @Font(fontName = "Arial")
     )
 )
-public class OrderExcelDto {
+public class PurchaseOrderTemplate {
 
   @Sheet(
-      name = "PMS 발주서",
+      name = "Order",
       index = 0,
       columnWidths = {
-          @ColumnWidth(column = 0, width = 15),
-          @ColumnWidth(column = 11, width = 30)
+          @ColumnWidth(column = 0, width = 25)
       },
-      protect = false,
-      protectKey = "1234",
       defaultColumnWidth = 20,
       defaultRowHeightInPoints = 20
   )
   private OrderSheet sheet = new OrderSheet();
+
+  @Builder
+  public PurchaseOrderTemplate(OrderSheet sheet) {
+    this.sheet = sheet;
+  }
 }

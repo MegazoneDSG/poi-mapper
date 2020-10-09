@@ -1,10 +1,13 @@
 package com.mz.poi.mapper.sample;
 
 import com.mz.poi.mapper.annotation.Cell;
+import com.mz.poi.mapper.annotation.CellStyle;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.IndexedColors;
 
 @Getter
 @Setter
@@ -16,12 +19,16 @@ public class SummaryRow {
       cellType = CellType.STRING,
       ignoreParse = true
   )
-  private String summaryTitle = "합계";
+  private String title = "SUBTOTAL";
 
   @Cell(
       column = 5,
       cellType = CellType.FORMULA,
+      style = @CellStyle(
+          fillForegroundColor = IndexedColors.AQUA,
+          fillPattern = FillPatternType.SOLID_FOREGROUND
+      ),
       ignoreParse = true
   )
-  private String formula = "SUM({{items.at(0).formula}}:{{items.last.formula}})";
+  private String formula = "SUM({{itemTable.at(0).total}}:{{itemTable.last.total}})";
 }

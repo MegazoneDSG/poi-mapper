@@ -1,5 +1,6 @@
 package com.mz.poi.mapper;
 
+import com.mz.poi.mapper.exception.ExcelGenerateException;
 import com.mz.poi.mapper.helper.FormulaHelper;
 import com.mz.poi.mapper.structure.CellAnnotation;
 import com.mz.poi.mapper.structure.CellStyleAnnotation;
@@ -100,12 +101,8 @@ public class ExcelGenerator {
       //cols 적용
       this.mergeCell(cell, cellAnnotation.getColumn(), cellAnnotation.getCols());
       //값 바인딩
-      try {
-        Object cellValue = this.findCellValue(cellStructure);
-        this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue);
-      } catch (IllegalAccessException e) {
-        throw new IllegalArgumentException(e);
-      }
+      Object cellValue = this.findCellValue(cellStructure);
+      this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue);
     });
 
     //종료
@@ -119,25 +116,20 @@ public class ExcelGenerator {
     // draw header
     this.drawDataHeaderRow(annotation, currentRowNum.get(), sheet);
 
-    try {
-      // draw cachedDataRowStyle
-      Map<String, CellStyle> cachedDataRowStyle = this.createCachedDataRowStyle(rowStructure);
-      Collection<?> items = this.findRowValue(rowStructure, rowStructure.getField().getType());
-      if (items == null) {
-        rowStructure.setGenerated(true);
-        rowStructure.setEndRowNum(currentRowNum.get());
-        return;
-      }
-      items.forEach(item -> {
-        this.drawDataRow(rowStructure, currentRowNum.incrementAndGet(), item, cachedDataRowStyle,
-            sheet);
-      });
+    // draw cachedDataRowStyle
+    Map<String, CellStyle> cachedDataRowStyle = this.createCachedDataRowStyle(rowStructure);
+    Collection<?> items = this.findRowDataCollection(rowStructure);
+    if (items == null) {
       rowStructure.setGenerated(true);
       rowStructure.setEndRowNum(currentRowNum.get());
-
-    } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException(e);
+      return;
     }
+    items.forEach(item -> {
+      this.drawDataRow(rowStructure, currentRowNum.incrementAndGet(), item, cachedDataRowStyle,
+          sheet);
+    });
+    rowStructure.setGenerated(true);
+    rowStructure.setEndRowNum(currentRowNum.get());
   }
 
   private Map<String, CellStyle> createCachedDataRowStyle(RowStructure rowStructure) {
@@ -182,12 +174,15 @@ public class ExcelGenerator {
       //cols 적용
       this.mergeCell(cell, cellAnnotation.getColumn(), cellAnnotation.getCols());
       //값 바인딩
+      Object cellValue;
       try {
-        Object cellValue = cellStructure.getField().get(item);
-        this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue);
+        cellValue = cellStructure.getField().get(item);
       } catch (IllegalAccessException e) {
-        throw new IllegalArgumentException(e);
+        throw new ExcelGenerateException(
+            String.format("can not find field from data item, %s", cellStructure.getFieldName()),
+            e);
       }
+      this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue);
     });
   }
 
@@ -238,30 +233,39 @@ public class ExcelGenerator {
   }
 
   @SuppressWarnings("unchecked")
-  private <T> Collection<T> findRowValue(RowStructure rowStructure, Class<T> type)
-      throws IllegalAccessException {
-    Field sheetField = rowStructure.getSheetField();
-    Object sheetObj = sheetField.get(this.excelDto);
-    if (sheetObj == null) {
-      return null;
+  private <T> Collection<T> findRowDataCollection(RowStructure rowStructure) {
+    try {
+      Field sheetField = rowStructure.getSheetField();
+      Object sheetObj = sheetField.get(this.excelDto);
+      if (sheetObj == null) {
+        return null;
+      }
+      Field rowField = rowStructure.getField();
+      return (Collection<T>) rowField.get(sheetObj);
+    } catch (IllegalAccessException e) {
+      throw new ExcelGenerateException(
+          String.format("can not find data row collection, %s", rowStructure.getFieldName()), e);
     }
-    Field rowField = rowStructure.getField();
-    return (Collection<T>) rowField.get(sheetObj);
   }
 
-  private Object findCellValue(CellStructure cellStructure) throws IllegalAccessException {
+  private Object findCellValue(CellStructure cellStructure) {
     Field sheetField = cellStructure.getSheetField();
-    Object sheetObj = sheetField.get(this.excelDto);
-    if (sheetObj == null) {
-      return null;
+    try {
+      Object sheetObj = sheetField.get(this.excelDto);
+      if (sheetObj == null) {
+        return null;
+      }
+      Field rowField = cellStructure.getRowField();
+      Object rowObj = rowField.get(sheetObj);
+      if (rowObj == null) {
+        return null;
+      }
+      Field cellField = cellStructure.getField();
+      return cellField.get(rowObj);
+    } catch (IllegalAccessException e) {
+      throw new ExcelGenerateException(
+          String.format("can not find cell class, %s", cellStructure.getFieldName()), e);
     }
-    Field rowField = cellStructure.getRowField();
-    Object rowObj = rowField.get(sheetObj);
-    if (rowObj == null) {
-      return null;
-    }
-    Field cellField = cellStructure.getField();
-    return cellField.get(rowObj);
   }
 
   private void bindCellValue(Cell cell, CellType cellType, Object value) {

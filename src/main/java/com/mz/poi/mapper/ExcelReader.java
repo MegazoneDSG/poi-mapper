@@ -1,6 +1,8 @@
 package com.mz.poi.mapper;
 
 import com.mz.poi.mapper.annotation.Match;
+import com.mz.poi.mapper.exception.ExcelReadException;
+import com.mz.poi.mapper.exception.ReadExceptionAddress;
 import com.mz.poi.mapper.helper.FormulaHelper;
 import com.mz.poi.mapper.structure.CellAnnotation;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
@@ -11,6 +13,8 @@ import com.mz.poi.mapper.structure.ExcelStructure.SheetStructure;
 import com.mz.poi.mapper.structure.SheetAnnotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -56,7 +60,8 @@ public class ExcelReader {
       try {
         sheetField.set(excelDto, sheetObj);
       } catch (IllegalAccessException e) {
-        throw new IllegalArgumentException(e);
+        throw new ExcelReadException("Invalid sheet class", e,
+            new ReadExceptionAddress(annotation.getIndex()));
       }
 
       while (!sheetStructure.isAllRowsGenerated()) {
@@ -80,7 +85,10 @@ public class ExcelReader {
     try {
       rowField.set(sheetObj, rowObj);
     } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException(e);
+      throw new ExcelReadException("Invalid row class", e,
+          new ReadExceptionAddress(
+              this.workbook.getSheetIndex(sheet.getSheetName()), rowStructure.getStartRowNum())
+      );
     }
 
     XSSFRow row = sheet.getRow(rowStructure.getStartRowNum());
@@ -107,7 +115,10 @@ public class ExcelReader {
       collectionField.setAccessible(true);
       collectionField.set(sheetObj, collection);
     } catch (IllegalAccessException | NoSuchFieldException e) {
-      throw new IllegalArgumentException(e);
+      throw new ExcelReadException("Invalid data row class", e,
+          new ReadExceptionAddress(
+              this.workbook.getSheetIndex(sheet.getSheetName()), rowStructure.getStartRowNum())
+      );
     }
 
     AtomicInteger currentRowNum = new AtomicInteger(rowStructure.getStartRowNum());
@@ -167,7 +178,7 @@ public class ExcelReader {
 
   private boolean bindCellValue(Cell cell, CellStructure cellStructure, Object rowObj) {
     try {
-      if (!Optional.ofNullable(cell).isPresent()) {
+      if (!Optional.ofNullable(cell).isPresent() || cellStructure.getAnnotation().isIgnoreParse()) {
         return false;
       }
       AtomicBoolean isBind = new AtomicBoolean(false);
@@ -187,16 +198,34 @@ public class ExcelReader {
             Field cellField = cellStructure.getField();
             cellField.setAccessible(true);
             Class<?> numberType = cellField.getType();
-            if (Double.class.isAssignableFrom(numberType)) {
+            if (Double.class.isAssignableFrom(numberType) ||
+                double.class.isAssignableFrom(numberType)) {
               cellField.set(rowObj, cellValue);
-            } else if (Float.class.isAssignableFrom(numberType)) {
+            } else if (Float.class.isAssignableFrom(numberType) ||
+                float.class.isAssignableFrom(numberType)) {
               cellField.set(rowObj, (float) cellValue);
-            } else if (Long.class.isAssignableFrom(numberType)) {
+            } else if (Long.class.isAssignableFrom(numberType) ||
+                long.class.isAssignableFrom(numberType)) {
               cellField.set(rowObj, Double.valueOf(cellValue).longValue());
-            } else if (Short.class.isAssignableFrom(numberType)) {
+            } else if (Short.class.isAssignableFrom(numberType) ||
+                short.class.isAssignableFrom(numberType)) {
               cellField.set(rowObj, Double.valueOf(cellValue).shortValue());
-            } else {
+            } else if (BigDecimal.class.isAssignableFrom(numberType)) {
+              cellField.set(rowObj, BigDecimal.valueOf(cellValue));
+            } else if (BigInteger.class.isAssignableFrom(numberType)) {
+              cellField.set(rowObj, BigInteger.valueOf(Double.valueOf(cellValue).longValue()));
+            } else if (Integer.class.isAssignableFrom(numberType) ||
+                int.class.isAssignableFrom(numberType)) {
               cellField.set(rowObj, Double.valueOf(cellValue).intValue());
+            } else {
+              throw new ExcelReadException(
+                  String.format("not supported number type %s", numberType.getName()),
+                  new ReadExceptionAddress(
+                      this.workbook.getSheetIndex(cell.getSheet().getSheetName()),
+                      cell.getRowIndex(),
+                      cell.getColumnIndex()
+                  )
+              );
             }
             isBind.set(true);
           }
@@ -212,9 +241,13 @@ public class ExcelReader {
       }
       return isBind.get();
     } catch (IllegalAccessException e) {
-      throw new IllegalArgumentException(
-          String.format("Invalid type match cell rowNum: %s columnIndex: %s",
-              cell.getAddress().getRow(), cell.getAddress().getColumn()));
+      throw new ExcelReadException("can not set cell value", e,
+          new ReadExceptionAddress(
+              this.workbook.getSheetIndex(cell.getSheet().getSheetName()),
+              cell.getRowIndex(),
+              cell.getColumnIndex()
+          )
+      );
     }
   }
 }
