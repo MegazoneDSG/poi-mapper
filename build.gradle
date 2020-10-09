@@ -2,6 +2,9 @@ apply plugin: 'java'
 apply plugin: 'jacoco'
 apply plugin: 'groovy'
 apply plugin: 'idea'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+apply plugin: 'java-library'
 
 ext {
     lombokVersion = '1.18.4'
@@ -35,3 +38,41 @@ dependencies {
 }
 
 jar { enabled = true }
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            artifactId = 'poi-mapper'
+            from components.java
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = 'Mz Poi Mapper'
+                description = 'Model to Excel, Excel to Model mapper based on apache poi'
+                url = 'https://github.com/MegazoneDSG/poi-mapper'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'SeungpilPark'
+                        name = 'Seungpil Park'
+                        email = 'darkgodarkgo@gmail.com'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/MegazoneDSG/poi-mapper'
+                }
+            }
+        }
+    }
+}
