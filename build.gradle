@@ -1,0 +1,37 @@
+apply plugin: 'java'
+apply plugin: 'jacoco'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+
+ext {
+    lombokVersion = '1.18.4'
+    poiVersion = '4.1.0'
+    beanVersion = '5.2.8.RELEASE'
+}
+
+group = 'com.mz'
+version = '1.0.0-SNAPSHOT'
+
+tasks.withType(JavaCompile) {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+compileJava.options.encoding = 'UTF-8'
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+dependencies {
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    compile "org.slf4j:slf4j-api:1.7.12"
+    compile "org.apache.poi:poi:${poiVersion}"
+    compile "org.apache.poi:poi-ooxml:${poiVersion}"
+    compile "org.springframework:spring-beans:${beanVersion}"
+    testCompile "org.slf4j:slf4j-log4j12:1.7.12"
+    testCompile "junit:junit:4.12"
+}
+
+jar { enabled = true }
