@@ -333,10 +333,10 @@ It is an expression that converts a specific cell location in the model to an Ex
 
 | expression  | example | description |
 |------------|--------|--------|
-| [rowFiledName].[cellFieldName] | titleRow.title  | If titleRow's row is 0 and title's coumn is 0, return **A1** |
-| [rowFiledName].last.[cellFieldName] | itemTable.last.total  | Works only in DataRows. If itemTable's end row is 15 and total's coumn is 5, return **F16**. See [SummaryRow](#SummaryRow) sample |
-| [rowFiledName].at([DataIndex]).[cellFieldName] | itemTable.at(0).total  | Works only in DataRows. If itemTable's start row is 13 and total's coumn is 5, return **F14**. See [SummaryRow](#SummaryRow) sample |
-| this.[cellFieldName] | this.qty  | Works only in DataRows. expression `this` means targeting cell's current row. If the qty's current row is 13 and qty's coumn is 3, return **D14**. See [ItemRow](#ItemRow) sample |
+| {{[rowFiledName].[cellFieldName]}} | titleRow.title  | If titleRow's row is 0 and title's coumn is 0, return **A1** |
+| {{[rowFiledName].last.[cellFieldName]}} | itemTable.last.total  | Works only in DataRows. If itemTable's end row is 15 and total's coumn is 5, return **F16**. See [SummaryRow](#SummaryRow) sample |
+| {{[rowFiledName].at([DataIndex]).[cellFieldName]}} | itemTable.at(0).total  | Works only in DataRows. If itemTable's start row is 13 and total's coumn is 5, return **F14**. See [SummaryRow](#SummaryRow) sample |
+| {{this.[cellFieldName]}} | this.qty  | Works only in DataRows. expression `this` means cell's current row. If the qty's current row is 13 and qty's coumn is 3, return **D14**. See [ItemRow](#ItemRow) sample |
 
 
 ### Row model samples includes cells.
