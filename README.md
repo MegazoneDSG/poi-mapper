@@ -339,9 +339,9 @@ It is an expression that converts a specific cell location in the model to an Ex
 | this.[cellFieldName] | this.qty  | Works only in DataRows. expression `this` means targeting cell's current row. If the qty's current row is 13 and qty's coumn is 3, return **D14**. See [ItemRow](#ItemRow) sample |
 
 
-### Row model samples includs cells.
+### Row model samples includes cells.
 
-The samples of row model includs cells.
+The samples of row model includes cells.
 
 ![](https://user-images.githubusercontent.com/61041926/95660437-ddc04d00-0b62-11eb-9e02-be6b6a839b88.png)
 
@@ -571,3 +571,11 @@ public class SummaryRow {
 
 Apache License Version 2.0, January 2004
 [http://www.apache.org/licenses/](http://www.apache.org/licenses/)
+
+## Contact && Issue
+
+If you find a bug or want to improve the function, please create a github issue.
+
+Any other questions: seungpilpark@mz.co.kr
+
+Author **Seungpil Park, Megazone Inc.**
