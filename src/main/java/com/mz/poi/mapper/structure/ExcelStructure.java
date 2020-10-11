@@ -6,6 +6,7 @@ import com.mz.poi.mapper.annotation.Excel;
 import com.mz.poi.mapper.annotation.Row;
 import com.mz.poi.mapper.annotation.Sheet;
 import com.mz.poi.mapper.exception.ExcelStructureException;
+import com.mz.poi.mapper.helper.InheritedFieldHelper;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
@@ -27,6 +28,14 @@ public class ExcelStructure {
   private ExcelAnnotation annotation;
   private List<SheetStructure> sheets = new ArrayList<>();
 
+  public SheetStructure getSheet(String fieldName) {
+    return this.sheets.stream()
+        .filter(sheetStructure -> sheetStructure.getFieldName().equals(fieldName))
+        .findFirst()
+        .orElseThrow(() -> new ExcelStructureException(
+            String.format("No such sheet of %s fieldName", fieldName)));
+  }
+
 
   @Getter
   @Setter
@@ -37,6 +46,14 @@ public class ExcelStructure {
     private Field field;
     private String fieldName;
     private List<RowStructure> rows = new ArrayList<>();
+
+    public RowStructure getRow(String fieldName) {
+      return this.rows.stream()
+          .filter(rowStructure -> rowStructure.getFieldName().equals(fieldName))
+          .findFirst()
+          .orElseThrow(() -> new ExcelStructureException(
+              String.format("No such row of %s fieldName", fieldName)));
+    }
 
     public boolean isAllRowsGenerated() {
       return this.rows.stream()
@@ -109,6 +126,14 @@ public class ExcelStructure {
     private String fieldName;
     private List<CellStructure> cells = new ArrayList<>();
 
+    public CellStructure getCell(String fieldName) {
+      return this.cells.stream()
+          .filter(cellStructure -> cellStructure.getFieldName().equals(fieldName))
+          .findFirst()
+          .orElseThrow(() -> new ExcelStructureException(
+              String.format("No such cell of %s fieldName", fieldName)));
+    }
+
     public boolean isAfterRow() {
       String rowAfter = this.annotation.getRowAfter();
       return rowAfter != null && rowAfter.length() > 0;
@@ -165,7 +190,7 @@ public class ExcelStructure {
     }
     this.setAnnotation(new ExcelAnnotation(excel));
 
-    this.sheets = Arrays.stream(dtoType.getDeclaredFields())
+    this.sheets = Arrays.stream(InheritedFieldHelper.getDeclaredFields(dtoType))
         .filter(field -> {
           field.setAccessible(true);
           Sheet sheet = field.getAnnotation(Sheet.class);
@@ -186,7 +211,7 @@ public class ExcelStructure {
           return sheetStructure;
         })
         .peek(sheetStructure ->
-            Arrays.stream(sheetStructure.field.getType().getDeclaredFields())
+            Arrays.stream(InheritedFieldHelper.getDeclaredFields(sheetStructure.field.getType()))
                 .filter(field -> {
                   field.setAccessible(true);
                   Row row = field.getAnnotation(Row.class);
@@ -228,12 +253,12 @@ public class ExcelStructure {
                   Field[] fields;
                   boolean isRow = rowStructure.annotation instanceof RowAnnotation;
                   if (isRow) {
-                    fields = rowStructure.field.getType().getDeclaredFields();
+                    fields = InheritedFieldHelper.getDeclaredFields(rowStructure.field.getType());
                   } else {
                     ParameterizedType genericType =
                         (ParameterizedType) rowStructure.field.getGenericType();
                     Class<?> dataRowClass = (Class<?>) genericType.getActualTypeArguments()[0];
-                    fields = dataRowClass.getDeclaredFields();
+                    fields = InheritedFieldHelper.getDeclaredFields(dataRowClass);
                   }
 
                   Arrays.stream(fields)

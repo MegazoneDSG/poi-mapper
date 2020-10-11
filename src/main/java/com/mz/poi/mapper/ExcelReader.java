@@ -4,6 +4,7 @@ import com.mz.poi.mapper.annotation.Match;
 import com.mz.poi.mapper.exception.ExcelReadException;
 import com.mz.poi.mapper.exception.ReadExceptionAddress;
 import com.mz.poi.mapper.helper.FormulaHelper;
+import com.mz.poi.mapper.helper.InheritedFieldHelper;
 import com.mz.poi.mapper.structure.CellAnnotation;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
 import com.mz.poi.mapper.structure.ExcelStructure;
@@ -42,8 +43,15 @@ public class ExcelReader {
     this.formulaHelper = new FormulaHelper();
   }
 
+  public <T> T read(final Class<T> excelDtoType, ExcelStructure excelStructure) {
+    this.structure = excelStructure;
+    return this.read(excelDtoType);
+  }
+
   public <T> T read(final Class<T> excelDtoType) {
-    this.structure = new ExcelStructure().build(excelDtoType);
+    if (this.structure == null) {
+      this.structure = new ExcelStructure().build(excelDtoType);
+    }
     T excelDto = BeanUtils.instantiateClass(excelDtoType);
 
     List<SheetStructure> sheets = this.structure.getSheets();
@@ -111,7 +119,8 @@ public class ExcelReader {
     List collection = new ArrayList<>();
     try {
       Field sheetField = rowStructure.getSheetField();
-      Field collectionField = sheetField.getType().getDeclaredField(rowStructure.getFieldName());
+      Field collectionField = InheritedFieldHelper
+          .getDeclaredField(sheetField.getType(), rowStructure.getFieldName());
       collectionField.setAccessible(true);
       collectionField.set(sheetObj, collection);
     } catch (IllegalAccessException | NoSuchFieldException e) {

@@ -46,8 +46,15 @@ public class ExcelGenerator {
     this.formulaHelper = new FormulaHelper();
   }
 
+  public XSSFWorkbook generate(final ExcelStructure excelStructure) {
+    this.structure = excelStructure;
+    return this.generate();
+  }
+
   public XSSFWorkbook generate() {
-    this.structure = new ExcelStructure().build(excelDto.getClass());
+    if (this.structure == null) {
+      this.structure = new ExcelStructure().build(excelDto.getClass());
+    }
 
     List<SheetStructure> sheets = this.structure.getSheets();
     sheets.stream().sorted(
