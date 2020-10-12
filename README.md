@@ -15,7 +15,7 @@ repositories {
     maven { url 'https://github.com/MegazoneDSG/maven-repo/raw/master/snapshots' }
 }
 dependencies {
-    compile "com.mz:poi-mapper:1.0.0-SNAPSHOT"
+    compile "com.mz:poi-mapper:1.0.2-SNAPSHOT"
 }
 ```
 
@@ -286,6 +286,7 @@ public class OrderSheet {
 | headerHeightInPoints | int | [@Sheet](#@Sheet).defaultRowHeightInPoints | Specified header row height. |
 | headerStyle | [@CellStyle](#CellStyle) | [@Sheet](#Sheet).defaultStyle | Default cell style of header row |
 | headers | Array of [@Header](#Header) | Empty | Array of Headers |
+| hideHeader | boolean | false | Whether hide headers or not |
 | dataHeightInPoints | int | [@Sheet](#@Sheet).defaultRowHeightInPoints | Specified data row height. |
 | dataStyle | [@CellStyle](#CellStyle) | [@Sheet](#Sheet).defaultStyle | Default cell style of data row |
 | match | [Match](#Match) | Match.ALL | DataRow recognition condition when converting Excel to model |
