@@ -39,7 +39,7 @@ public class ExcelStructure {
             String.format("No such sheet of %s fieldName", fieldName)));
   }
 
-  public void resetRowStatusAfterReadOrGenerate() {
+  public void resetRowGeneratedStatus() {
     this.sheets.forEach(sheetStructure -> {
       sheetStructure.getRows().forEach(rowStructure -> {
         rowStructure.generated = false;

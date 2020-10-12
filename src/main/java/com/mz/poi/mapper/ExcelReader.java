@@ -52,6 +52,7 @@ public class ExcelReader {
     if (this.structure == null) {
       this.structure = new ExcelStructure().build(excelDtoType);
     }
+    this.structure.resetRowGeneratedStatus();
     T excelDto = BeanUtils.instantiateClass(excelDtoType);
 
     List<SheetStructure> sheets = this.structure.getSheets();
@@ -82,7 +83,6 @@ public class ExcelReader {
         }
       }
     });
-    this.structure.resetRowStatusAfterReadOrGenerate();
     return excelDto;
   }
 

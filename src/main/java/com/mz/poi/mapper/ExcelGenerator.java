@@ -55,6 +55,7 @@ public class ExcelGenerator {
     if (this.structure == null) {
       this.structure = new ExcelStructure().build(excelDto.getClass());
     }
+    this.structure.resetRowGeneratedStatus();
 
     List<SheetStructure> sheets = this.structure.getSheets();
     sheets.stream().sorted(
@@ -85,7 +86,6 @@ public class ExcelGenerator {
       }
       this.formulaHelper.applySheetFormulas(sheetStructure);
     });
-    this.structure.resetRowStatusAfterReadOrGenerate();
     return this.workbook;
   }
 
