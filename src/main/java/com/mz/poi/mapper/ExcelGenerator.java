@@ -85,6 +85,7 @@ public class ExcelGenerator {
       }
       this.formulaHelper.applySheetFormulas(sheetStructure);
     });
+    this.structure.resetRowStatusAfterReadOrGenerate();
     return this.workbook;
   }
 

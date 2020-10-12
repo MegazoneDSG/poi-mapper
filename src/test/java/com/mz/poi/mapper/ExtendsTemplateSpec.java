@@ -81,21 +81,15 @@ public class ExtendsTemplateSpec {
 
   @Test
   public void excel_to_model_modify_cell_structure_column() {
-    ExcelStructure generateStructure = new ExcelStructure().build(ExtendsTemplate.class);
-    CellStructure generateCellStructure =
-        generateStructure.getSheet("sheet").getRow("firstTable").getCell("secondValue");
-    generateCellStructure.getAnnotation().setColumn(2);
-    generateCellStructure.getAnnotation().setCols(2);
-
-    ExcelStructure readStructure = new ExcelStructure().build(ExtendsTemplate.class);
-    CellStructure readCellStructure =
-        readStructure.getSheet("sheet").getRow("firstTable").getCell("secondValue");
-    readCellStructure.getAnnotation().setColumn(2);
-    readCellStructure.getAnnotation().setCols(2);
+    ExcelStructure structure = new ExcelStructure().build(ExtendsTemplate.class);
+    CellStructure cellStructure =
+        structure.getSheet("sheet").getRow("firstTable").getCell("secondValue");
+    cellStructure.getAnnotation().setColumn(2);
+    cellStructure.getAnnotation().setCols(2);
 
     ExtendsTemplate model = this.createModel();
-    XSSFWorkbook excel = ExcelMapper.toExcel(model, generateStructure);
-    ExtendsTemplate fromModel = ExcelMapper.fromExcel(excel, ExtendsTemplate.class, readStructure);
+    XSSFWorkbook excel = ExcelMapper.toExcel(model, structure);
+    ExtendsTemplate fromModel = ExcelMapper.fromExcel(excel, ExtendsTemplate.class, structure);
 
     assert fromModel.getSheet().getFirstTable().size() == 1;
     assert fromModel.getSheet().getSecondTable().size() == 1;

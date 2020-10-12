@@ -82,6 +82,7 @@ public class ExcelReader {
         }
       }
     });
+    this.structure.resetRowStatusAfterReadOrGenerate();
     return excelDto;
   }
 

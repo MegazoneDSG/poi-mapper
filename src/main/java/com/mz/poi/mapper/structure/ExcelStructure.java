@@ -20,13 +20,16 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
-@Setter
 @NoArgsConstructor
 public class ExcelStructure {
 
   private Class<?> dtoType;
   private ExcelAnnotation annotation;
   private List<SheetStructure> sheets = new ArrayList<>();
+
+  public void setAnnotation(ExcelAnnotation annotation) {
+    this.annotation = annotation;
+  }
 
   public SheetStructure getSheet(String fieldName) {
     return this.sheets.stream()
@@ -36,9 +39,22 @@ public class ExcelStructure {
             String.format("No such sheet of %s fieldName", fieldName)));
   }
 
+  public void resetRowStatusAfterReadOrGenerate() {
+    this.sheets.forEach(sheetStructure -> {
+      sheetStructure.getRows().forEach(rowStructure -> {
+        rowStructure.generated = false;
+        if (!rowStructure.isAfterRow()) {
+          rowStructure.startRowNum = rowStructure.getAnnotation().getRow();
+          rowStructure.endRowNum = rowStructure.getAnnotation().getRow();
+        } else {
+          rowStructure.startRowNum = 0;
+          rowStructure.endRowNum = 0;
+        }
+      });
+    });
+  }
 
   @Getter
-  @Setter
   @NoArgsConstructor
   public static class SheetStructure {
 
@@ -46,6 +62,10 @@ public class ExcelStructure {
     private Field field;
     private String fieldName;
     private List<RowStructure> rows = new ArrayList<>();
+
+    public void setAnnotation(SheetAnnotation annotation) {
+      this.annotation = annotation;
+    }
 
     public RowStructure getRow(String fieldName) {
       return this.rows.stream()
@@ -91,10 +111,8 @@ public class ExcelStructure {
                   rowStructure.getAnnotation().getRowAfter()
               );
               if (beforeRowStructure.isGenerated()) {
-                rowStructure.setStartRowNum(
-                    beforeRowStructure.endRowNum +
-                        rowStructure.getAnnotation().getRowAfterOffset() + 1
-                );
+                rowStructure.startRowNum = (beforeRowStructure.endRowNum +
+                    rowStructure.getAnnotation().getRowAfterOffset() + 1);
                 return true;
               }
               return false;
@@ -116,7 +134,6 @@ public class ExcelStructure {
   }
 
   @Getter
-  @Setter
   @NoArgsConstructor
   public static class RowStructure {
 
@@ -125,6 +142,10 @@ public class ExcelStructure {
     private Field field;
     private String fieldName;
     private List<CellStructure> cells = new ArrayList<>();
+
+    public void setAnnotation(AbstractRowAnnotation annotation) {
+      this.annotation = annotation;
+    }
 
     public CellStructure getCell(String fieldName) {
       return this.cells.stream()
@@ -147,6 +168,18 @@ public class ExcelStructure {
     private int startRowNum;
     private int endRowNum;
 
+    public void setGenerated(boolean generated) {
+      this.generated = generated;
+    }
+
+    public void setStartRowNum(int startRowNum) {
+      this.startRowNum = startRowNum;
+    }
+
+    public void setEndRowNum(int endRowNum) {
+      this.endRowNum = endRowNum;
+    }
+
     @Builder
     public RowStructure(
         AbstractRowAnnotation annotation, Field sheetField, Field field, String fieldName) {
@@ -158,7 +191,6 @@ public class ExcelStructure {
   }
 
   @Getter
-  @Setter
   @NoArgsConstructor
   public static class CellStructure {
 
@@ -167,6 +199,10 @@ public class ExcelStructure {
     private Field rowField;
     private Field field;
     private String fieldName;
+
+    public void setAnnotation(CellAnnotation annotation) {
+      this.annotation = annotation;
+    }
 
     @Builder
     public CellStructure(
@@ -243,8 +279,8 @@ public class ExcelStructure {
                     );
                   }
                   if (!rowStructure.isAfterRow()) {
-                    rowStructure.setStartRowNum(rowStructure.getAnnotation().getRow());
-                    rowStructure.setEndRowNum(rowStructure.getAnnotation().getRow());
+                    rowStructure.startRowNum = rowStructure.getAnnotation().getRow();
+                    rowStructure.endRowNum = rowStructure.getAnnotation().getRow();
                   }
                   sheetStructure.rows.add(rowStructure);
                   return rowStructure;
