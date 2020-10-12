@@ -35,7 +35,7 @@ public class ExtendsTemplateSpec {
                 .secondTable(
                     Stream.of(
                         SecondTableRow.builder()
-                            .firstValue(1)
+                            .firstValue("c")
                             .build()
                     ).collect(Collectors.toList())
                 )

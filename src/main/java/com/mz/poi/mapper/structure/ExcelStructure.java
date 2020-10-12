@@ -3,6 +3,7 @@ package com.mz.poi.mapper.structure;
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.DataRows;
 import com.mz.poi.mapper.annotation.Excel;
+import com.mz.poi.mapper.annotation.Match;
 import com.mz.poi.mapper.annotation.Row;
 import com.mz.poi.mapper.annotation.Sheet;
 import com.mz.poi.mapper.exception.ExcelStructureException;
@@ -17,7 +18,6 @@ import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
 @NoArgsConstructor
@@ -321,6 +321,20 @@ public class ExcelStructure {
                             .build();
                         rowStructure.cells.add(cellStructure);
                       });
+
+                  if (!isRow) {
+                    Match match = ((DataRowsAnnotation) rowStructure.annotation).getMatch();
+                    if (Match.REQUIRED.equals(match)) {
+                      boolean requiredCellPresent = rowStructure.cells.stream()
+                          .anyMatch(cellStructure -> cellStructure.getAnnotation().isRequired());
+                      if (!requiredCellPresent) {
+                        throw new ExcelStructureException(
+                            String.format(
+                                "%s row match type is %s, but required cell is not founded in structure",
+                                rowStructure.getFieldName(), match.toString()));
+                      }
+                    }
+                  }
                 }))
         .collect(Collectors.toList());
     return this;

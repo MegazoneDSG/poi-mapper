@@ -7,6 +7,7 @@ import com.mz.poi.mapper.annotation.Excel;
 import com.mz.poi.mapper.annotation.Font;
 import com.mz.poi.mapper.annotation.Header;
 import com.mz.poi.mapper.annotation.Match;
+import com.mz.poi.mapper.annotation.Row;
 import com.mz.poi.mapper.annotation.Sheet;
 import java.util.List;
 import lombok.Builder;
@@ -41,8 +42,11 @@ public class ExtendsTemplate {
   @NoArgsConstructor
   public static class TestSheet extends TestSheetSuper {
 
+    @Row(row = 0)
+    public OverrideRow overrideRow = new OverrideRow();
+
     @DataRows(
-        row = 0,
+        row = 1,
         match = Match.REQUIRED,
         headers = {
             @Header(name = "a", column = 0),
@@ -71,6 +75,32 @@ public class ExtendsTemplate {
         }
     )
     private List<SecondTableRow> secondTable;
+  }
+
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  public static class OverrideRow extends OverrideRowSuper {
+
+    @Cell(
+        column = 0,
+        cellType = CellType.STRING,
+        ignoreParse = true
+    )
+    private String title = "OverrideRow";
+  }
+
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  public static class OverrideRowSuper {
+
+    @Cell(
+        column = 0,
+        cellType = CellType.STRING,
+        ignoreParse = true
+    )
+    private String title = "OverrideRowSuper";
   }
 
   @Getter
@@ -111,13 +141,13 @@ public class ExtendsTemplate {
 
     @Cell(
         column = 0,
-        cellType = CellType.NUMERIC,
+        cellType = CellType.STRING,
         required = true
     )
-    private int firstValue;
+    private String firstValue;
 
     @Builder
-    public SecondTableRow(int firstValue) {
+    public SecondTableRow(String firstValue) {
       this.firstValue = firstValue;
     }
   }

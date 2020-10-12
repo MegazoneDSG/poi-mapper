@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class InheritedFieldHelper {
 
@@ -11,10 +12,14 @@ public class InheritedFieldHelper {
     if (clazz == null) {
       return new Field[]{};
     }
-    List<Field> superClassFields = new ArrayList<>(
-        Arrays.asList(getDeclaredFields(clazz.getSuperclass())));
     List<Field> declaredFields = new ArrayList<>(
         Arrays.asList(clazz.getDeclaredFields()));
+    List<Field> superClassFields = Arrays.stream(getDeclaredFields(clazz.getSuperclass()))
+        .filter(superClassField ->
+            declaredFields.stream()
+                .noneMatch(declaredField ->
+                    declaredField.getName().equals(superClassField.getName())))
+        .collect(Collectors.toList());
     declaredFields.addAll(superClassFields);
     return declaredFields.toArray(new Field[0]);
   }
