@@ -43,13 +43,8 @@ public class ExcelStructure {
     this.sheets.forEach(sheetStructure -> {
       sheetStructure.getRows().forEach(rowStructure -> {
         rowStructure.generated = false;
-        if (!rowStructure.isAfterRow()) {
-          rowStructure.startRowNum = rowStructure.getAnnotation().getRow();
-          rowStructure.endRowNum = rowStructure.getAnnotation().getRow();
-        } else {
-          rowStructure.startRowNum = 0;
-          rowStructure.endRowNum = 0;
-        }
+        rowStructure.startRowNum = 0;
+        rowStructure.endRowNum = 0;
       });
     });
   }
@@ -104,21 +99,30 @@ public class ExcelStructure {
       return this.rows.stream()
           .filter(rowStructure -> !rowStructure.generated)
           .filter(rowStructure -> {
-            if (!rowStructure.isAfterRow()) {
-              return true;
-            } else {
+            if (rowStructure.isAfterRow()) {
               RowStructure beforeRowStructure = this.findRowByFieldName(
                   rowStructure.getAnnotation().getRowAfter()
               );
-              if (beforeRowStructure.isGenerated()) {
-                rowStructure.startRowNum = (beforeRowStructure.endRowNum +
-                    rowStructure.getAnnotation().getRowAfterOffset() +
-                    (rowStructure.isDataRowAndHideHeader() ? 0 : 1)
-                );
-                return true;
+              if (!beforeRowStructure.isGenerated()) {
+                return false;
               }
-              return false;
+              if (rowStructure.isDataRow()) {
+                rowStructure.startRowNum = beforeRowStructure.endRowNum +
+                    rowStructure.getAnnotation().getRowAfterOffset() + 1;
+              } else {
+                rowStructure.startRowNum = beforeRowStructure.endRowNum +
+                    rowStructure.getAnnotation().getRowAfterOffset() + 1;
+                rowStructure.endRowNum = rowStructure.startRowNum;
+              }
+            } else {
+              if (rowStructure.isDataRow()) {
+                rowStructure.startRowNum = rowStructure.getAnnotation().getRow();
+              } else {
+                rowStructure.startRowNum = rowStructure.getAnnotation().getRow();
+                rowStructure.endRowNum = rowStructure.startRowNum;
+              }
             }
+            return true;
           })
           .findFirst()
           .orElseThrow(() ->
@@ -286,10 +290,6 @@ public class ExcelStructure {
                             sheetStructure.annotation.getDefaultStyle()
                         )
                     );
-                  }
-                  if (!rowStructure.isAfterRow()) {
-                    rowStructure.startRowNum = rowStructure.getAnnotation().getRow();
-                    rowStructure.endRowNum = rowStructure.getAnnotation().getRow();
                   }
                   sheetStructure.rows.add(rowStructure);
                   return rowStructure;

@@ -75,7 +75,6 @@ public class ExcelReader {
 
       while (!sheetStructure.isAllRowsGenerated()) {
         RowStructure rowStructure = sheetStructure.nextRowStructure();
-
         if (!rowStructure.isDataRow()) {
           this.readRow(rowStructure, sheet, sheetObj);
         } else {
@@ -132,6 +131,9 @@ public class ExcelReader {
     }
 
     AtomicInteger currentRowNum = new AtomicInteger(rowStructure.getStartRowNum());
+    if (rowStructure.isDataRowAndHideHeader()) {
+      currentRowNum.decrementAndGet();
+    }
     AtomicBoolean readFinished = new AtomicBoolean(false);
     while (!readFinished.get()) {
       boolean isMatch =

@@ -122,7 +122,9 @@ public class ExcelGenerator {
     DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
 
     // draw header
-    if (!rowStructure.isDataRowAndHideHeader()) {
+    if (rowStructure.isDataRowAndHideHeader()) {
+      currentRowNum.decrementAndGet();
+    } else {
       this.drawDataHeaderRow(annotation, currentRowNum.get(), sheet);
     }
 
