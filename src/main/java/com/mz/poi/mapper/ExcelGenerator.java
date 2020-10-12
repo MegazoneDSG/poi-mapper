@@ -122,7 +122,9 @@ public class ExcelGenerator {
     DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
 
     // draw header
-    this.drawDataHeaderRow(annotation, currentRowNum.get(), sheet);
+    if (!rowStructure.isDataRowAndHideHeader()) {
+      this.drawDataHeaderRow(annotation, currentRowNum.get(), sheet);
+    }
 
     // draw cachedDataRowStyle
     Map<String, CellStyle> cachedDataRowStyle = this.createCachedDataRowStyle(rowStructure);

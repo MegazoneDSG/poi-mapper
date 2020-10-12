@@ -72,7 +72,8 @@ public class ExtendsTemplate {
         match = Match.REQUIRED,
         headers = {
             @Header(name = "c", column = 0)
-        }
+        },
+        hideHeader = true
     )
     private List<SecondTableRow> secondTable;
   }

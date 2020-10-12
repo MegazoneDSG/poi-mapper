@@ -25,5 +25,7 @@ public @interface DataRows {
 
   int[] headerHeightInPoints() default {};
 
+  boolean hideHeader() default false;
+
   Header[] headers() default {};
 }

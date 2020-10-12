@@ -12,7 +12,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class DataRowsAnnotation extends AbstractRowAnnotation{
+public class DataRowsAnnotation extends AbstractRowAnnotation {
 
   private Match match;
   private CellStyleAnnotation dataStyle;
@@ -22,6 +22,7 @@ public class DataRowsAnnotation extends AbstractRowAnnotation{
   private CellStyleAnnotation headerStyle;
   private boolean useHeaderHeightInPoints = false;
   private int headerHeightInPoints;
+  private boolean hideHeader;
 
   private List<HeaderAnnotation> headers = new ArrayList<>();
 
@@ -41,6 +42,8 @@ public class DataRowsAnnotation extends AbstractRowAnnotation{
       this.useHeaderHeightInPoints = true;
       this.headerHeightInPoints = row.headerHeightInPoints()[0];
     }
+
+    this.hideHeader = row.hideHeader();
 
     Arrays.asList(row.headers())
         .forEach(header -> this.headers.add(

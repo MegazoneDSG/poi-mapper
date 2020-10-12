@@ -112,7 +112,9 @@ public class ExcelStructure {
               );
               if (beforeRowStructure.isGenerated()) {
                 rowStructure.startRowNum = (beforeRowStructure.endRowNum +
-                    rowStructure.getAnnotation().getRowAfterOffset() + 1);
+                    rowStructure.getAnnotation().getRowAfterOffset() +
+                    (rowStructure.isDataRowAndHideHeader() ? 0 : 1)
+                );
                 return true;
               }
               return false;
@@ -162,6 +164,13 @@ public class ExcelStructure {
 
     public boolean isDataRow() {
       return this.annotation instanceof DataRowsAnnotation;
+    }
+
+    public boolean isDataRowAndHideHeader() {
+      if (this.annotation instanceof DataRowsAnnotation) {
+        return ((DataRowsAnnotation) this.annotation).isHideHeader();
+      }
+      return false;
     }
 
     private boolean generated;
