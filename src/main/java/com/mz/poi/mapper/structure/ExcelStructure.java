@@ -27,6 +27,10 @@ public class ExcelStructure {
   private ExcelAnnotation annotation;
   private List<SheetStructure> sheets = new ArrayList<>();
 
+  public void setSheets(List<SheetStructure> sheets) {
+    this.sheets = sheets;
+  }
+
   public void setAnnotation(ExcelAnnotation annotation) {
     this.annotation = annotation;
   }
@@ -60,6 +64,10 @@ public class ExcelStructure {
 
     public void setAnnotation(SheetAnnotation annotation) {
       this.annotation = annotation;
+    }
+
+    public void setRows(List<RowStructure> rows) {
+      this.rows = rows;
     }
 
     public RowStructure getRow(String fieldName) {
@@ -151,6 +159,10 @@ public class ExcelStructure {
 
     public void setAnnotation(AbstractRowAnnotation annotation) {
       this.annotation = annotation;
+    }
+
+    public void setCells(List<CellStructure> cells) {
+      this.cells = cells;
     }
 
     public CellStructure getCell(String fieldName) {
