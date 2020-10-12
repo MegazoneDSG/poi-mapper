@@ -9,12 +9,13 @@ import com.mz.poi.mapper.annotation.Header;
 import com.mz.poi.mapper.annotation.Match;
 import com.mz.poi.mapper.annotation.Row;
 import com.mz.poi.mapper.annotation.Sheet;
+import com.mz.poi.mapper.structure.CellType;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.poi.ss.usermodel.CellType;
 
 @Getter
 @Setter
@@ -142,13 +143,16 @@ public class ExtendsTemplate {
 
     @Cell(
         column = 0,
-        cellType = CellType.STRING,
+        cellType = CellType.DATE,
+        style = @CellStyle(
+            dataFormat = "yyyy-mm-dd"
+        ),
         required = true
     )
-    private String firstValue;
+    private LocalDate firstValue;
 
     @Builder
-    public SecondTableRow(String firstValue) {
+    public SecondTableRow(LocalDate firstValue) {
       this.firstValue = firstValue;
     }
   }

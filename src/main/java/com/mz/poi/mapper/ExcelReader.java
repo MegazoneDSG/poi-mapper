@@ -3,9 +3,11 @@ package com.mz.poi.mapper;
 import com.mz.poi.mapper.annotation.Match;
 import com.mz.poi.mapper.exception.ExcelReadException;
 import com.mz.poi.mapper.exception.ReadExceptionAddress;
+import com.mz.poi.mapper.helper.DateFormatHelper;
 import com.mz.poi.mapper.helper.FormulaHelper;
 import com.mz.poi.mapper.helper.InheritedFieldHelper;
 import com.mz.poi.mapper.structure.CellAnnotation;
+import com.mz.poi.mapper.structure.CellType;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
 import com.mz.poi.mapper.structure.ExcelStructure;
 import com.mz.poi.mapper.structure.ExcelStructure.CellStructure;
@@ -16,15 +18,18 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -196,15 +201,42 @@ public class ExcelReader {
       AtomicBoolean isBind = new AtomicBoolean(false);
       cellStructure.getField().setAccessible(true);
       CellType expectedCellType = cellStructure.getAnnotation().getCellType();
+      org.apache.poi.ss.usermodel.CellType expectedExcelCellType = expectedCellType
+          .toExcelCellType();
       switch (expectedCellType) {
+        case DATE:
+          if (DateUtil.isCellDateFormatted(cell)) {
+            Date cellValue = cell.getDateCellValue();
+
+            Field cellField = cellStructure.getField();
+            cellField.setAccessible(true);
+            Class<?> dateType = cellField.getType();
+            if (LocalDateTime.class.isAssignableFrom(dateType)) {
+              cellField.set(rowObj, DateFormatHelper.getLocalDateTime(cellValue,
+                  this.structure.getAnnotation().getDateFormatZoneId()));
+            } else if (LocalDate.class.isAssignableFrom(dateType)) {
+              cellField.set(rowObj, DateFormatHelper.getLocalDate(cellValue,
+                  this.structure.getAnnotation().getDateFormatZoneId()));
+            } else {
+              throw new ExcelReadException(
+                  String.format("not supported date type %s", dateType.getName()),
+                  new ReadExceptionAddress(
+                      this.workbook.getSheetIndex(cell.getSheet().getSheetName()),
+                      cell.getRowIndex(),
+                      cell.getColumnIndex()
+                  )
+              );
+            }
+            isBind.set(true);
+          }
         case STRING:
-          if (cell.getCellType().equals(expectedCellType)) {
+          if (cell.getCellType().equals(expectedExcelCellType)) {
             cellStructure.getField().set(rowObj, cell.getStringCellValue());
             isBind.set(true);
           }
           break;
         case NUMERIC:
-          if (cell.getCellType().equals(expectedCellType)) {
+          if (cell.getCellType().equals(expectedExcelCellType)) {
             double cellValue = cell.getNumericCellValue();
 
             Field cellField = cellStructure.getField();
@@ -243,7 +275,7 @@ public class ExcelReader {
           }
           break;
         case BOOLEAN:
-          if (cell.getCellType().equals(expectedCellType)) {
+          if (cell.getCellType().equals(expectedExcelCellType)) {
             cellStructure.getField().setBoolean(rowObj, cell.getBooleanCellValue());
             isBind.set(true);
           }

@@ -4,7 +4,7 @@ import com.mz.poi.mapper.annotation.Cell;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.poi.ss.usermodel.CellType;
+import com.mz.poi.mapper.structure.CellType;
 
 @Getter
 @Setter

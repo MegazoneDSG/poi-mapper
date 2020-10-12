@@ -9,9 +9,11 @@ import com.mz.poi.mapper.sample.ShipRow;
 import com.mz.poi.mapper.sample.SummaryRow;
 import com.mz.poi.mapper.sample.TitleRow;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -54,7 +56,7 @@ public class ExcelMapperSpec {
                             .via("Purchase Part")
                             .fob("")
                             .terms("")
-                            .deliveryDate("2020-11-01")
+                            .deliveryDate(LocalDate.now())
                             .build()
                     ).collect(Collectors.toList())
                 )
@@ -87,9 +89,11 @@ public class ExcelMapperSpec {
   }
 
   @Test
-  public void excel_to_model() {
-    PurchaseOrderTemplate model = this.createModel();
-    XSSFWorkbook excel = ExcelMapper.toExcel(model);
+  public void excel_to_model() throws IOException {
+    FileInputStream fis = new FileInputStream("test.xlsx");
+    XSSFWorkbook excel = new XSSFWorkbook(fis);
+    // PurchaseOrderTemplate model = this.createModel();
+    // XSSFWorkbook excel = ExcelMapper.toExcel(model);
     PurchaseOrderTemplate fromModel = ExcelMapper.fromExcel(excel, PurchaseOrderTemplate.class);
 
     assert fromModel.getSheet().getItemTable().size() == 3;

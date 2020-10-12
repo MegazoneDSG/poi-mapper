@@ -1,10 +1,10 @@
 package com.mz.poi.mapper.annotation;
 
+import com.mz.poi.mapper.structure.CellType;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.apache.poi.ss.usermodel.CellType;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})

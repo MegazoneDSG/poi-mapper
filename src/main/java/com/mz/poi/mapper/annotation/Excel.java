@@ -12,4 +12,6 @@ public @interface Excel {
   CellStyle defaultStyle() default @CellStyle(
       font = @Font
   );
+
+  String dateFormatZoneId() default "";
 }

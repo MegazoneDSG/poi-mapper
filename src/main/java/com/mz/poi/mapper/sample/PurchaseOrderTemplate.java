@@ -16,7 +16,8 @@ import lombok.Setter;
 @Excel(
     defaultStyle = @CellStyle(
         font = @Font(fontName = "Arial")
-    )
+    ),
+    dateFormatZoneId = "Asia/Seoul"
 )
 public class PurchaseOrderTemplate {
 

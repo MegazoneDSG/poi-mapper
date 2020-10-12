@@ -11,8 +11,10 @@ import lombok.Setter;
 public class ExcelAnnotation {
 
   private CellStyleAnnotation defaultStyle;
+  private String dateFormatZoneId;
 
   public ExcelAnnotation(Excel excel) {
     this.defaultStyle = new CellStyleAnnotation(excel.defaultStyle());
+    this.dateFormatZoneId = excel.dateFormatZoneId();
   }
 }

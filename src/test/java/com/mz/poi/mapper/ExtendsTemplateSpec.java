@@ -10,6 +10,7 @@ import com.mz.poi.mapper.template.ExtendsTemplate.TestSheet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -35,7 +36,7 @@ public class ExtendsTemplateSpec {
                 .secondTable(
                     Stream.of(
                         SecondTableRow.builder()
-                            .firstValue("c")
+                            .firstValue(LocalDate.now())
                             .build()
                     ).collect(Collectors.toList())
                 )

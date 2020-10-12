@@ -15,7 +15,7 @@ repositories {
     maven { url 'https://github.com/MegazoneDSG/maven-repo/raw/master/snapshots' }
 }
 dependencies {
-    compile "com.mz:poi-mapper:1.0.2-SNAPSHOT"
+    compile "com.mz:poi-mapper:1.0.3-SNAPSHOT"
 }
 ```
 
@@ -62,7 +62,7 @@ public class ExcelMapperSpec {
                             .via("Purchase Part")
                             .fob("")
                             .terms("")
-                            .deliveryDate("2020-11-01")
+                            .deliveryDate(LocalDate.now())
                             .build()
                     ).collect(Collectors.toList())
                 )
@@ -125,7 +125,8 @@ Add `@Excel` annotaion to your model.
 @Excel(
     defaultStyle = @CellStyle(
         font = @Font(fontName = "Arial")
-    )
+    ),
+    dateFormatZoneId = "Asia/Seoul"
 )
 public class PurchaseOrderTemplate {
 
@@ -137,6 +138,7 @@ public class PurchaseOrderTemplate {
 | attribute  | type | default | description |
 |------------|--------|----------|-----------------------|
 | defaultStyle | [@CellStyle](#CellStyle) | [@CellStyle](#CellStyle) |Default cell style of excel |
+| dateFormatZoneId | String | Empty | Zone ID to be used when converting dates. If empty, is uses system default zone |
 
 ## @Sheet
 
@@ -144,7 +146,8 @@ public class PurchaseOrderTemplate {
 @Excel(
     defaultStyle = @CellStyle(
         font = @Font(fontName = "Arial")
-    )
+    ),
+    dateFormatZoneId = "Asia/Seoul"
 )
 public class PurchaseOrderTemplate {
 
@@ -316,7 +319,7 @@ Row recognition condition when converting Excel to model.
 
 ### CellType
 
-This is the CellType class of Apaceh poi. If the model class does not match CellType, it will not be converted.
+This is the CellType enums. If the model class does not match CellType, it will not be converted.
 
 | option  | Matching Java Class | description |
 |------------|--------|--------|
@@ -324,6 +327,7 @@ This is the CellType class of Apaceh poi. If the model class does not match Cell
 | NUMERIC | Double,Float,Long,Short,BigDecimal,BigInteger,Integer | - |
 | BLANK | None | Ignore convert |
 | BOOLEAN | Boolean | - |
+| DATE | LocalDate,LocalDateTime | - |
 | FORMULA | String | You can use the [FumularAddressExpression](#FumularAddressExpression) to write native formulas in Excel with specific cell locations in the model. |
 
 ### FumularAddressExpression
@@ -428,10 +432,11 @@ public class ShipRow {
 
   @Cell(
       column = 5,
-      cellType = CellType.STRING,
+      cellType = CellType.DATE,
+      style = @CellStyle(dataFormat = "yyyy-MM-dd"),
       required = true
   )
-  private String deliveryDate;
+  private LocalDate deliveryDate;
 }
 ```
 
@@ -516,7 +521,8 @@ public class SummaryRow {
 | attribute  | type | default | description |
 |------------|--------|----------|-----------------------|
 | font | [@Font](#Font) | [@Font](#Font) | font of cell |
-| dataFormat | String | General | DataFormat of cell. See [BuiltinFormats](https://poi.apache.org/apidocs/dev/org/apache/poi/ss/usermodel/BuiltinFormats.html) |
+| dataFormat | String | General | DataFormat of cell. See [BuiltinFormats](https://poi.apache.org/apidocs/dev/org/apache/poi/ss/usermodel/BuiltinFormats.html). 
+In addition to BuiltinFormats, you can also use generic dateFormats (such as yyyy.MM.dd). |
 | hidden | boolean | false | whether the cell's using this style are to be hidden |
 | locked | boolean | false | whether the cell's using this style are to be locked |
 | quotePrefixed | boolean | false | Is "Quote Prefix" or "123 Prefix" enabled for the cell |

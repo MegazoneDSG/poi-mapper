@@ -1,11 +1,11 @@
 package com.mz.poi.mapper.sample;
 
 import com.mz.poi.mapper.annotation.Cell;
+import com.mz.poi.mapper.structure.CellType;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.poi.ss.usermodel.CellType;
 
 @Getter
 @Setter

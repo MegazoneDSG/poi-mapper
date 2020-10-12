@@ -1,9 +1,11 @@
 package com.mz.poi.mapper;
 
 import com.mz.poi.mapper.exception.ExcelGenerateException;
+import com.mz.poi.mapper.helper.DateFormatHelper;
 import com.mz.poi.mapper.helper.FormulaHelper;
 import com.mz.poi.mapper.structure.CellAnnotation;
 import com.mz.poi.mapper.structure.CellStyleAnnotation;
+import com.mz.poi.mapper.structure.CellType;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
 import com.mz.poi.mapper.structure.ExcelStructure;
 import com.mz.poi.mapper.structure.ExcelStructure.CellStructure;
@@ -13,6 +15,8 @@ import com.mz.poi.mapper.structure.FontAnnotation;
 import com.mz.poi.mapper.structure.RowAnnotation;
 import com.mz.poi.mapper.structure.SheetAnnotation;
 import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -23,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
@@ -103,7 +106,7 @@ public class ExcelGenerator {
       //스타일 적용
       CellStyle cellStyle = this.createCellStyle(cellAnnotation.getStyle());
       XSSFCell cell = row.createCell(
-          cellAnnotation.getColumn(), cellAnnotation.getCellType()
+          cellAnnotation.getColumn(), cellAnnotation.getCellType().toExcelCellType()
       );
       cell.setCellStyle(cellStyle);
       //cols 적용
@@ -179,7 +182,7 @@ public class ExcelGenerator {
     cells.forEach(cellStructure -> {
       CellAnnotation cellAnnotation = cellStructure.getAnnotation();
       XSSFCell cell = row.createCell(
-          cellAnnotation.getColumn(), cellAnnotation.getCellType()
+          cellAnnotation.getColumn(), cellAnnotation.getCellType().toExcelCellType()
       );
       this.getCachedDataRowStyle(cachedDataRowStyle, cellStructure.getFieldName())
           .ifPresent(cell::setCellStyle);
@@ -206,7 +209,7 @@ public class ExcelGenerator {
     annotation.getHeaders().forEach(headerAnnotation -> {
       CellStyle cellStyle = this.createCellStyle(headerAnnotation.getStyle());
       XSSFCell cell = row.createCell(
-          headerAnnotation.getColumn(), CellType.STRING
+          headerAnnotation.getColumn(), org.apache.poi.ss.usermodel.CellType.STRING
       );
       cell.setCellStyle(cellStyle);
       this.mergeCell(cell, headerAnnotation.getColumn(), headerAnnotation.getCols());
@@ -240,7 +243,7 @@ public class ExcelGenerator {
     fontAnnotation.applyFont(font);
 
     CellStyle cellStyle = this.workbook.createCellStyle();
-    style.applyStyle(cellStyle, font);
+    style.applyStyle(cellStyle, font, this.workbook);
     return cellStyle;
   }
 
@@ -306,6 +309,16 @@ public class ExcelGenerator {
       case FORMULA:
         if (value instanceof String) {
           this.formulaHelper.addFormula(cell, (String) value);
+        }
+        break;
+      case DATE:
+        if (value instanceof LocalDate) {
+          cell.setCellValue(DateFormatHelper
+              .getDate((LocalDate) value, this.structure.getAnnotation().getDateFormatZoneId()));
+        } else if (value instanceof LocalDateTime) {
+          cell.setCellValue(DateFormatHelper
+              .getDate((LocalDateTime) value,
+                  this.structure.getAnnotation().getDateFormatZoneId()));
         }
         break;
       default:

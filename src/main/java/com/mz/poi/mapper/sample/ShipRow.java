@@ -1,11 +1,13 @@
 package com.mz.poi.mapper.sample;
 
 import com.mz.poi.mapper.annotation.Cell;
+import com.mz.poi.mapper.annotation.CellStyle;
+import com.mz.poi.mapper.structure.CellType;
+import java.time.LocalDate;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.poi.ss.usermodel.CellType;
 
 @Getter
 @Setter
@@ -39,14 +41,15 @@ public class ShipRow {
 
   @Cell(
       column = 5,
-      cellType = CellType.STRING,
+      cellType = CellType.DATE,
+      style = @CellStyle(dataFormat = "yyyy-MM-dd"),
       required = true
   )
-  private String deliveryDate;
+  private LocalDate deliveryDate;
 
   @Builder
   public ShipRow(String requester, String via, String fob, String terms,
-      String deliveryDate) {
+      LocalDate deliveryDate) {
     this.requester = requester;
     this.via = via;
     this.fob = fob;
