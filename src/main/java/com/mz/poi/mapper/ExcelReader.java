@@ -154,7 +154,6 @@ public class ExcelReader {
 
   private boolean readDataRow(
       RowStructure rowStructure, int rowNum, XSSFSheet sheet, List collection) {
-    DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
 
     XSSFRow row = sheet.getRow(rowNum);
     if (row == null) {
@@ -165,32 +164,64 @@ public class ExcelReader {
     Class<?> dataRowClass = (Class<?>) genericType.getActualTypeArguments()[0];
     Object rowObj = BeanUtils.instantiateClass(dataRowClass);
 
-    //all match 일경우는 하나만 없어도 실패, required 일 경우는 필수값이 없다면 실패
+    DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
     Match match = annotation.getMatch();
-    AtomicBoolean isMatch = new AtomicBoolean(true);
-
-    List<CellStructure> cells = rowStructure.getCells();
-    cells.forEach(cellStructure -> {
-      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-
-      XSSFCell cell = row.getCell(cellAnnotation.getColumn());
-      boolean isBind = this.bindCellValue(cell, cellStructure, rowObj);
-      if (Match.ALL.equals(match)) {
-        if (!isBind) {
-          isMatch.set(false);
-        }
-      } else {
-        if (!isBind && cellAnnotation.isRequired()) {
-          isMatch.set(false);
-        }
-      }
-    });
-    if (isMatch.get()) {
-      //noinspection unchecked
+    boolean isMatch = false;
+    if (Match.REQUIRED.equals(match)) {
+      isMatch = this.isRequiredMatch(rowStructure, row, rowObj);
+    } else if (Match.ALL.equals(match)) {
+      isMatch = this.isAllMatch(rowStructure, row, rowObj);
+    } else if (Match.STOP_ON_BLANK.equals(match)) {
+      isMatch = this.isNotBlankMatch(rowStructure, row, rowObj);
+    }
+    if (isMatch) {
       collection.add(rowObj);
       return true;
     }
     return false;
+  }
+
+  private boolean isNotBlankMatch(RowStructure rowStructure, XSSFRow row, Object rowObj) {
+    boolean isMatch = rowStructure.getCells().stream()
+        .anyMatch(cellStructure -> {
+          int column = cellStructure.getAnnotation().getColumn();
+          XSSFCell cell = row.getCell(column);
+          return !(cell == null
+              || cell.getCellType() == org.apache.poi.ss.usermodel.CellType.BLANK);
+        });
+    List<CellStructure> cells = rowStructure.getCells();
+    cells.forEach(cellStructure -> {
+      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
+      XSSFCell cell = row.getCell(cellAnnotation.getColumn());
+      this.bindCellValue(cell, cellStructure, rowObj);
+    });
+    return isMatch;
+  }
+
+  private boolean isRequiredMatch(RowStructure rowStructure, XSSFRow row, Object rowObj) {
+    AtomicBoolean isMatch = new AtomicBoolean(true);
+    rowStructure.getCells().forEach(cellStructure -> {
+      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
+      XSSFCell cell = row.getCell(cellAnnotation.getColumn());
+      boolean isBind = this.bindCellValue(cell, cellStructure, rowObj);
+      if (cellAnnotation.isRequired() && !isBind) {
+        isMatch.set(false);
+      }
+    });
+    return isMatch.get();
+  }
+
+  private boolean isAllMatch(RowStructure rowStructure, XSSFRow row, Object rowObj) {
+    AtomicBoolean isMatch = new AtomicBoolean(true);
+    rowStructure.getCells().forEach(cellStructure -> {
+      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
+      XSSFCell cell = row.getCell(cellAnnotation.getColumn());
+      boolean isBind = this.bindCellValue(cell, cellStructure, rowObj);
+      if (!isBind) {
+        isMatch.set(false);
+      }
+    });
+    return isMatch.get();
   }
 
   private boolean bindCellValue(Cell cell, CellStructure cellStructure, Object rowObj) {
