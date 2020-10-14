@@ -35,7 +35,7 @@ public class DateFormatHelper {
     } else {
       zone = ZoneId.of("Asia/Seoul");
     }
-    return LocalDateTime.ofInstant(new Date().toInstant(), zone);
+    return LocalDateTime.ofInstant(date.toInstant(), zone);
   }
 
   public static LocalDate getLocalDate(Date date, String zoneId) {

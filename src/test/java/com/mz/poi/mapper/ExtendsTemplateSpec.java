@@ -36,7 +36,7 @@ public class ExtendsTemplateSpec {
                 .secondTable(
                     Stream.of(
                         SecondTableRow.builder()
-                            .firstValue(LocalDate.now())
+                            .firstValue(LocalDate.now().minusDays(3))
                             .build()
                     ).collect(Collectors.toList())
                 )
