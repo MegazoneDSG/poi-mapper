@@ -236,7 +236,13 @@ public class ExcelReader {
           .toExcelCellType();
       switch (expectedCellType) {
         case DATE:
-          if (DateUtil.isCellDateFormatted(cell)) {
+          boolean isCellDateFormatted;
+          try {
+            isCellDateFormatted = DateUtil.isCellDateFormatted(cell);
+          } catch (IllegalStateException ex) {
+            break;
+          }
+          if (isCellDateFormatted) {
             Date cellValue = cell.getDateCellValue();
 
             Field cellField = cellStructure.getField();
@@ -260,6 +266,7 @@ public class ExcelReader {
             }
             isBind.set(true);
           }
+          break;
         case STRING:
           if (cell.getCellType().equals(expectedExcelCellType)) {
             cellStructure.getField().set(rowObj, cell.getStringCellValue());
