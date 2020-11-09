@@ -9,6 +9,9 @@ import org.springframework.util.StringUtils;
 public class DateFormatHelper {
 
   public static Date getDate(LocalDate localDate, String zoneId) {
+    if (localDate == null) {
+      return null;
+    }
     ZoneId zone;
     if (StringUtils.isEmpty(zoneId)) {
       zone = ZoneId.systemDefault();
@@ -19,6 +22,9 @@ public class DateFormatHelper {
   }
 
   public static Date getDate(LocalDateTime localDateTime, String zoneId) {
+    if (localDateTime == null) {
+      return null;
+    }
     ZoneId zone;
     if (StringUtils.isEmpty(zoneId)) {
       zone = ZoneId.systemDefault();
@@ -29,6 +35,9 @@ public class DateFormatHelper {
   }
 
   public static LocalDateTime getLocalDateTime(Date date, String zoneId) {
+    if (date == null) {
+      return null;
+    }
     ZoneId zone;
     if (StringUtils.isEmpty(zoneId)) {
       zone = ZoneId.systemDefault();
