@@ -203,7 +203,7 @@ public class ExcelGenerator {
 
   private void drawDataHeaderRow(DataRowsAnnotation annotation, int rowNum, XSSFSheet sheet) {
     XSSFRow row = sheet.createRow(rowNum);
-    if (annotation.isUseDataHeightInPoints()) {
+    if (annotation.isUseHeaderHeightInPoints()) {
       row.setHeightInPoints(annotation.getHeaderHeightInPoints());
     }
     annotation.getHeaders().forEach(headerAnnotation -> {

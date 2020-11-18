@@ -15,7 +15,7 @@ repositories {
     maven { url 'https://github.com/MegazoneDSG/maven-repo/raw/master/snapshots' }
 }
 dependencies {
-    compile "com.mz:poi-mapper:1.0.7-SNAPSHOT"
+    compile "com.mz:poi-mapper:1.0.8-SNAPSHOT"
 }
 ```
 
