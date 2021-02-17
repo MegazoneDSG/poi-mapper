@@ -30,31 +30,31 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.streaming.SXSSFCell;
+import org.apache.poi.xssf.streaming.SXSSFRow;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 @Getter
 public class ExcelGenerator {
 
-  private XSSFWorkbook workbook;
+  private SXSSFWorkbook workbook;
   private ExcelStructure structure;
   private Object excelDto;
   private FormulaHelper formulaHelper;
 
   public ExcelGenerator(Object excelDto) {
-    this.workbook = new XSSFWorkbook();
+    this.workbook = new SXSSFWorkbook();
     this.excelDto = excelDto;
     this.formulaHelper = new FormulaHelper();
   }
 
-  public XSSFWorkbook generate(final ExcelStructure excelStructure) {
+  public SXSSFWorkbook generate(final ExcelStructure excelStructure) {
     this.structure = excelStructure;
     return this.generate();
   }
 
-  public XSSFWorkbook generate() {
+  public SXSSFWorkbook generate() {
     if (this.structure == null) {
       this.structure = new ExcelStructure().build(excelDto.getClass());
     }
@@ -65,7 +65,7 @@ public class ExcelGenerator {
         Comparator.comparing(sheetStructure -> sheetStructure.getAnnotation().getIndex())
     ).forEach(sheetStructure -> {
       SheetAnnotation annotation = sheetStructure.getAnnotation();
-      XSSFSheet sheet = this.workbook.createSheet(annotation.getName());
+      SXSSFSheet sheet = this.workbook.createSheet(annotation.getName());
       if (annotation.isProtect()) {
         sheet.protectSheet(annotation.getProtectKey());
       }
@@ -92,8 +92,8 @@ public class ExcelGenerator {
     return this.workbook;
   }
 
-  private void drawRow(RowStructure rowStructure, XSSFSheet sheet) {
-    XSSFRow row = sheet.createRow(rowStructure.getStartRowNum());
+  private void drawRow(RowStructure rowStructure, SXSSFSheet sheet) {
+    SXSSFRow row = sheet.createRow(rowStructure.getStartRowNum());
 
     RowAnnotation rowAnnotation = (RowAnnotation) rowStructure.getAnnotation();
     if (rowAnnotation.isUseRowHeightInPoints()) {
@@ -105,7 +105,7 @@ public class ExcelGenerator {
 
       //스타일 적용
       CellStyle cellStyle = this.createCellStyle(cellAnnotation.getStyle());
-      XSSFCell cell = row.createCell(
+      SXSSFCell cell = row.createCell(
           cellAnnotation.getColumn(), cellAnnotation.getCellType().toExcelCellType()
       );
       cell.setCellStyle(cellStyle);
@@ -120,7 +120,7 @@ public class ExcelGenerator {
     rowStructure.setGenerated(true);
   }
 
-  private void drawDataRows(RowStructure rowStructure, XSSFSheet sheet) {
+  private void drawDataRows(RowStructure rowStructure, SXSSFSheet sheet) {
     AtomicInteger currentRowNum = new AtomicInteger(rowStructure.getStartRowNum());
     DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
 
@@ -169,11 +169,11 @@ public class ExcelGenerator {
 
   private void drawDataRow(
       RowStructure rowStructure, int rowNum, Object item, Map<String, CellStyle> cachedDataRowStyle,
-      XSSFSheet sheet) {
+      SXSSFSheet sheet) {
 
     DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
 
-    XSSFRow row = sheet.createRow(rowNum);
+    SXSSFRow row = sheet.createRow(rowNum);
     if (annotation.isUseDataHeightInPoints()) {
       row.setHeightInPoints(annotation.getDataHeightInPoints());
     }
@@ -181,7 +181,7 @@ public class ExcelGenerator {
     List<CellStructure> cells = rowStructure.getCells();
     cells.forEach(cellStructure -> {
       CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      XSSFCell cell = row.createCell(
+      SXSSFCell cell = row.createCell(
           cellAnnotation.getColumn(), cellAnnotation.getCellType().toExcelCellType()
       );
       this.getCachedDataRowStyle(cachedDataRowStyle, cellStructure.getFieldName())
@@ -201,14 +201,14 @@ public class ExcelGenerator {
     });
   }
 
-  private void drawDataHeaderRow(DataRowsAnnotation annotation, int rowNum, XSSFSheet sheet) {
-    XSSFRow row = sheet.createRow(rowNum);
+  private void drawDataHeaderRow(DataRowsAnnotation annotation, int rowNum, SXSSFSheet sheet) {
+    SXSSFRow row = sheet.createRow(rowNum);
     if (annotation.isUseHeaderHeightInPoints()) {
       row.setHeightInPoints(annotation.getHeaderHeightInPoints());
     }
     annotation.getHeaders().forEach(headerAnnotation -> {
       CellStyle cellStyle = this.createCellStyle(headerAnnotation.getStyle());
-      XSSFCell cell = row.createCell(
+      SXSSFCell cell = row.createCell(
           headerAnnotation.getColumn(), org.apache.poi.ss.usermodel.CellType.STRING
       );
       cell.setCellStyle(cellStyle);

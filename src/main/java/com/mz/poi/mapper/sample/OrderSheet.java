@@ -85,7 +85,6 @@ public class OrderSheet {
           fillForegroundColor = IndexedColors.DARK_BLUE,
           fillPattern = FillPatternType.SOLID_FOREGROUND
       ),
-      headerHeightInPoints = 200,
       dataStyle = @CellStyle(
           borderTop = BorderStyle.THIN,
           borderBottom = BorderStyle.THIN,
