@@ -94,7 +94,7 @@ public class ExcelMapperSpec {
   @Test
   public void model_to_excel() throws IOException {
     PurchaseOrderTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
+    XSSFWorkbook excel = ExcelMapper.toExcel(model);
   }
 }
 ```
@@ -107,9 +107,7 @@ public class ExcelMapperSpec {
   @Test
   public void excel_to_model() {
     PurchaseOrderTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
-
-    //fromExcel supports both XSSFWorkbook and SXSSFWorkbook
+    XSSFWorkbook excel = ExcelMapper.toExcel(model);
     PurchaseOrderTemplate fromModel = ExcelMapper.fromExcel(excel, PurchaseOrderTemplate.class);
   }
 }

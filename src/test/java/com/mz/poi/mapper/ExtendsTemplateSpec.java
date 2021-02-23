@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
@@ -48,7 +47,7 @@ public class ExtendsTemplateSpec {
   @Test
   public void model_to_excel() throws IOException {
     ExtendsTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
+    XSSFWorkbook excel = ExcelMapper.toExcel(model);
     File file = new File("extends_test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
@@ -58,7 +57,7 @@ public class ExtendsTemplateSpec {
   @Test
   public void excel_to_model() {
     ExtendsTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
+    XSSFWorkbook excel = ExcelMapper.toExcel(model);
     ExtendsTemplate fromModel = ExcelMapper.fromExcel(excel, ExtendsTemplate.class);
 
     assert fromModel.getSheet().getFirstTable().size() == 1;
@@ -74,7 +73,7 @@ public class ExtendsTemplateSpec {
     cellStructure.getAnnotation().setCols(2);
 
     ExtendsTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model, structure);
+    XSSFWorkbook excel = ExcelMapper.toExcel(model, structure);
     File file = new File("modify_cell_structure_column.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
@@ -90,7 +89,7 @@ public class ExtendsTemplateSpec {
     cellStructure.getAnnotation().setCols(2);
 
     ExtendsTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model, structure);
+    XSSFWorkbook excel = ExcelMapper.toExcel(model, structure);
     ExtendsTemplate fromModel = ExcelMapper.fromExcel(excel, ExtendsTemplate.class, structure);
 
     assert fromModel.getSheet().getFirstTable().size() == 1;

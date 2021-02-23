@@ -10,7 +10,6 @@ import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 @Getter
@@ -141,7 +140,7 @@ public class CellStyleAnnotation {
   }
 
   public void applyStyle(
-      org.apache.poi.ss.usermodel.CellStyle cellStyle, Font font, SXSSFWorkbook workbook) {
+      org.apache.poi.ss.usermodel.CellStyle cellStyle, Font font, XSSFWorkbook workbook) {
     cellStyle.setFont(font);
 //    if (isDateType) {
 //      workbook.getCreationHelper().createDataFormat().getFormat()
