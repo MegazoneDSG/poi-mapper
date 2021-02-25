@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
@@ -69,6 +71,45 @@ public class ExcelMapperSpec {
                             .name("#428832121").description("Product EFG").qty(15)
                             .unitPrice(BigDecimal.valueOf(12L)).build(),
                         ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
+                            .name("#428832121").description("Product EFG").qty(15)
+                            .unitPrice(BigDecimal.valueOf(12L)).build(),
+                        ItemRow.builder()
                             .name("#339884344").description("Product XYZ").qty(78)
                             .unitPrice(BigDecimal.valueOf(1.75)).build()
                     ).collect(Collectors.toList())
@@ -81,7 +122,7 @@ public class ExcelMapperSpec {
   @Test
   public void model_to_excel() throws IOException {
     PurchaseOrderTemplate model = this.createModel();
-    XSSFWorkbook excel = ExcelMapper.toExcel(model);
+    Workbook excel = ExcelMapper.toExcel(model);
     File file = new File("test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
@@ -91,12 +132,12 @@ public class ExcelMapperSpec {
   @Test
   public void excel_to_model() throws IOException {
     FileInputStream fis = new FileInputStream("test.xlsx");
-    XSSFWorkbook excel = new XSSFWorkbook(fis);
+    Workbook excel = new XSSFWorkbook(fis);
     // PurchaseOrderTemplate model = this.createModel();
     // XSSFWorkbook excel = ExcelMapper.toExcel(model);
     PurchaseOrderTemplate fromModel = ExcelMapper.fromExcel(excel, PurchaseOrderTemplate.class);
 
-    assert fromModel.getSheet().getItemTable().size() == 3;
+    assert fromModel.getSheet().getItemTable().size() == 16;
   }
 
 }
