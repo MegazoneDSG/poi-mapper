@@ -1,92 +1,69 @@
 package com.mz.poi.mapper.helper;
 
 import com.mz.poi.mapper.exception.ExcelGenerateException;
-import com.mz.poi.mapper.structure.ExcelStructure.RowStructure;
-import com.mz.poi.mapper.structure.ExcelStructure.SheetStructure;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.mz.poi.mapper.structure.CellStructure;
+import com.mz.poi.mapper.structure.RowStructure;
+import com.mz.poi.mapper.structure.SheetStructure;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.util.CellAddress;
 
 @NoArgsConstructor
 public class FormulaHelper {
 
-  private Map<String, List<FormulaItem>> formulaItemsMap = new HashMap<>();
-
-  public void addFormula(Cell cell, String formula) {
-    String sheetName = cell.getRow().getSheet().getSheetName();
-    if (!formulaItemsMap.containsKey(sheetName)) {
-      formulaItemsMap.put(sheetName, new ArrayList<>());
-    }
-    this.formulaItemsMap.get(sheetName).add(
-        FormulaItem.builder()
-            .cell(cell)
-            .formula(formula)
-            .build()
-    );
-  }
-
-  public void applySheetFormulas(SheetStructure sheetStructure) {
-    String sheetName = sheetStructure.getAnnotation().getName();
-    if (!formulaItemsMap.containsKey(sheetName)) {
-      return;
-    }
-    this.formulaItemsMap.get(sheetName).forEach(item -> {
-      String addressRx = "\\{\\{(.+?)}}";
-      Matcher m = Pattern.compile(addressRx).matcher(item.formula);
-      while (m.find()) {
-        String addressToReplace = m.group(0);
-        String addressStr = m.group(1);
-        String[] split = addressStr.split("\\.");
-        Optional<String> cellAddress = Optional.empty();
-        if (split.length == 2 && "this".equals(split[0])) {
-          cellAddress = this.getSelfDataRowCellAddress(sheetStructure, addressStr, item.getCell());
-        } else if (split.length == 2) {
-          cellAddress = this.getRowCellAddress(sheetStructure, addressStr);
-        } else if (split.length == 3) {
-          cellAddress = this.getIndexedDataRowCellAddress(sheetStructure, addressStr);
-        }
-        String finalAddress = cellAddress.orElseThrow(() ->
-            new ExcelGenerateException(String.format("Not found cellAddress %s", addressStr)));
-        item.formula = item.formula.replace(addressToReplace, finalAddress);
+  public void applyFormula(Cell cell, String formulaExpresion, CellStructure cellStructure,
+      int rowIndex) {
+    String addressRx = "\\{\\{(.+?)}}";
+    String formula = formulaExpresion;
+    Matcher m = Pattern.compile(addressRx).matcher(formulaExpresion);
+    while (m.find()) {
+      String addressToReplace = m.group(0);
+      String addressStr = m.group(1);
+      String[] split = addressStr.split("\\.");
+      Optional<String> cellAddress = Optional.empty();
+      if (split.length == 2 && "this".equals(split[0])) {
+        cellAddress = this.getSelfDataRowCellAddress(cellStructure, addressStr, rowIndex);
+      } else if (split.length == 2) {
+        cellAddress = this.getRowCellAddress(cellStructure, addressStr);
+      } else if (split.length == 3) {
+        cellAddress = this.getIndexedDataRowCellAddress(cellStructure, addressStr);
       }
-      item.getCell().setCellFormula(item.getFormula());
-    });
+      String finalAddress = cellAddress.orElseThrow(() ->
+          new ExcelGenerateException(String.format("Not found cellAddress %s", addressStr)));
+      formula = formula.replace(addressToReplace, finalAddress);
+    }
+    cell.setCellFormula(formula);
   }
 
-  private Optional<String> getRowCellAddress(SheetStructure sheetStructure, String addressStr) {
+  private Optional<String> getRowCellAddress(CellStructure cellStructure, String addressStr) {
     String[] split = addressStr.split("\\.");
     String rowFieldName = split[0];
     String cellFieldName = split[1];
-    RowStructure rowStructure = sheetStructure.findRowByFieldName(rowFieldName);
+    RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
+        .findRowByFieldName(rowFieldName);
     return rowStructure.getCells().stream()
-        .filter(cellStructure ->
-            cellStructure.getFieldName().equals(cellFieldName))
-        .map(cellStructure ->
+        .filter(_cellStructure ->
+            _cellStructure.getFieldName().equals(cellFieldName))
+        .map(_cellStructure ->
             new CellAddress(
                 rowStructure.getStartRowNum(),
-                cellStructure.getAnnotation().getColumn()
+                _cellStructure.getAnnotation().getColumn()
             ).formatAsString())
         .findFirst();
   }
 
-  private Optional<String> getIndexedDataRowCellAddress(SheetStructure sheetStructure,
+  private Optional<String> getIndexedDataRowCellAddress(CellStructure cellStructure,
       String addressStr) {
     String[] split = addressStr.split("\\.");
     String rowFieldName = split[0];
     String rowNumRex = split[1];
     String cellFieldName = split[2];
 
-    RowStructure rowStructure = sheetStructure.findRowByFieldName(rowFieldName);
+    RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
+        .findRowByFieldName(rowFieldName);
     int rowNum = 0;
     if ("last".equals(rowNumRex)) {
       rowNum = rowStructure.getEndRowNum();
@@ -107,41 +84,26 @@ public class FormulaHelper {
 
     int finalRowNum = rowNum;
     return rowStructure.getCells().stream()
-        .filter(cellStructure ->
-            cellStructure.getFieldName().equals(cellFieldName))
-        .map(cellStructure -> new CellAddress(
-            finalRowNum, cellStructure.getAnnotation().getColumn()
+        .filter(_cellStructure ->
+            _cellStructure.getFieldName().equals(cellFieldName))
+        .map(_cellStructure -> new CellAddress(
+            finalRowNum, _cellStructure.getAnnotation().getColumn()
         ).formatAsString())
         .findFirst();
   }
 
-  private Optional<String> getSelfDataRowCellAddress(SheetStructure sheetStructure,
-      String addressStr, Cell cell) {
+  private Optional<String> getSelfDataRowCellAddress(CellStructure cellStructure,
+      String addressStr, int rowIndex) {
     String[] split = addressStr.split("\\.");
     String cellFieldName = split[1];
 
-    RowStructure rowStructure = sheetStructure.findRowByRowIndex(cell.getRowIndex());
+    RowStructure rowStructure = cellStructure.getRowStructure();
     return rowStructure.getCells().stream()
-        .filter(cellStructure ->
-            cellStructure.getFieldName().equals(cellFieldName))
-        .map(cellStructure -> new CellAddress(
-            cell.getRowIndex(), cellStructure.getAnnotation().getColumn()
+        .filter(_cellStructure ->
+            _cellStructure.getFieldName().equals(cellFieldName))
+        .map(_cellStructure -> new CellAddress(
+            rowIndex, _cellStructure.getAnnotation().getColumn()
         ).formatAsString())
         .findFirst();
-  }
-
-  @Getter
-  @Setter
-  @NoArgsConstructor
-  public static class FormulaItem {
-
-    private Cell cell;
-    private String formula;
-
-    @Builder
-    public FormulaItem(Cell cell, String formula) {
-      this.cell = cell;
-      this.formula = formula;
-    }
   }
 }

@@ -4,16 +4,16 @@ import com.mz.poi.mapper.exception.ExcelGenerateException;
 import com.mz.poi.mapper.helper.DateFormatHelper;
 import com.mz.poi.mapper.helper.FormulaHelper;
 import com.mz.poi.mapper.structure.CellAnnotation;
+import com.mz.poi.mapper.structure.CellStructure;
 import com.mz.poi.mapper.structure.CellStyleAnnotation;
 import com.mz.poi.mapper.structure.CellType;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
 import com.mz.poi.mapper.structure.ExcelStructure;
-import com.mz.poi.mapper.structure.ExcelStructure.CellStructure;
-import com.mz.poi.mapper.structure.ExcelStructure.RowStructure;
-import com.mz.poi.mapper.structure.ExcelStructure.SheetStructure;
 import com.mz.poi.mapper.structure.FontAnnotation;
 import com.mz.poi.mapper.structure.RowAnnotation;
+import com.mz.poi.mapper.structure.RowStructure;
 import com.mz.poi.mapper.structure.SheetAnnotation;
+import com.mz.poi.mapper.structure.SheetStructure;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,44 +28,43 @@ import lombok.Getter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
-import org.apache.poi.xssf.streaming.SXSSFCell;
-import org.apache.poi.xssf.streaming.SXSSFRow;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 @Getter
 public class ExcelGenerator {
 
-  private SXSSFWorkbook workbook;
+  private Workbook workbook;
   private ExcelStructure structure;
   private Object excelDto;
   private FormulaHelper formulaHelper;
 
-  public ExcelGenerator(Object excelDto) {
-    this.workbook = new SXSSFWorkbook();
+  public ExcelGenerator(Object excelDto, Workbook workbook) {
+    this.workbook = workbook;
     this.excelDto = excelDto;
     this.formulaHelper = new FormulaHelper();
   }
 
-  public SXSSFWorkbook generate(final ExcelStructure excelStructure) {
+  public Workbook generate(final ExcelStructure excelStructure) {
     this.structure = excelStructure;
     return this.generate();
   }
 
-  public SXSSFWorkbook generate() {
+  public Workbook generate() {
     if (this.structure == null) {
       this.structure = new ExcelStructure().build(excelDto.getClass());
     }
-    this.structure.resetRowGeneratedStatus();
+    this.structure.prepareGenerateStructure(excelDto);
 
     List<SheetStructure> sheets = this.structure.getSheets();
     sheets.stream().sorted(
         Comparator.comparing(sheetStructure -> sheetStructure.getAnnotation().getIndex())
     ).forEach(sheetStructure -> {
       SheetAnnotation annotation = sheetStructure.getAnnotation();
-      SXSSFSheet sheet = this.workbook.createSheet(annotation.getName());
+      Sheet sheet = this.workbook.createSheet(annotation.getName());
       if (annotation.isProtect()) {
         sheet.protectSheet(annotation.getProtectKey());
       }
@@ -79,21 +78,23 @@ public class ExcelGenerator {
             );
           });
 
-      while (!sheetStructure.isAllRowsGenerated()) {
-        RowStructure rowStructure = sheetStructure.nextRowStructure();
-        if (!rowStructure.isDataRow()) {
-          this.drawRow(rowStructure, sheet);
-        } else {
-          this.drawDataRows(rowStructure, sheet);
-        }
-      }
-      this.formulaHelper.applySheetFormulas(sheetStructure);
+      sheetStructure.getRows()
+          .stream()
+          .sorted(Comparator.comparing(RowStructure::getStartRowNum))
+          .forEach(rowStructure -> {
+            if (!rowStructure.isDataRow()) {
+              this.drawRow(rowStructure, sheet);
+            } else {
+              this.drawDataRows(rowStructure, sheet);
+            }
+          });
+      // this.formulaHelper.applySheetFormulas(sheetStructure);
     });
     return this.workbook;
   }
 
-  private void drawRow(RowStructure rowStructure, SXSSFSheet sheet) {
-    SXSSFRow row = sheet.createRow(rowStructure.getStartRowNum());
+  private void drawRow(RowStructure rowStructure, Sheet sheet) {
+    Row row = sheet.createRow(rowStructure.getStartRowNum());
 
     RowAnnotation rowAnnotation = (RowAnnotation) rowStructure.getAnnotation();
     if (rowAnnotation.isUseRowHeightInPoints()) {
@@ -105,7 +106,7 @@ public class ExcelGenerator {
 
       //스타일 적용
       CellStyle cellStyle = this.createCellStyle(cellAnnotation.getStyle());
-      SXSSFCell cell = row.createCell(
+      Cell cell = row.createCell(
           cellAnnotation.getColumn(), cellAnnotation.getCellType().toExcelCellType()
       );
       cell.setCellStyle(cellStyle);
@@ -113,14 +114,12 @@ public class ExcelGenerator {
       this.mergeCell(cell, cellAnnotation.getColumn(), cellAnnotation.getCols());
       //값 바인딩
       Object cellValue = this.findCellValue(cellStructure);
-      this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue);
+      this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue, cellStructure,
+          rowStructure.getStartRowNum());
     });
-
-    //종료
-    rowStructure.setGenerated(true);
   }
 
-  private void drawDataRows(RowStructure rowStructure, SXSSFSheet sheet) {
+  private void drawDataRows(RowStructure rowStructure, Sheet sheet) {
     AtomicInteger currentRowNum = new AtomicInteger(rowStructure.getStartRowNum());
     DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
 
@@ -133,18 +132,14 @@ public class ExcelGenerator {
 
     // draw cachedDataRowStyle
     Map<String, CellStyle> cachedDataRowStyle = this.createCachedDataRowStyle(rowStructure);
-    Collection<?> items = this.findRowDataCollection(rowStructure);
+    Collection<?> items = rowStructure.findRowDataCollection(this.excelDto);
     if (items == null) {
-      rowStructure.setGenerated(true);
-      rowStructure.setEndRowNum(currentRowNum.get());
       return;
     }
     items.forEach(item -> {
       this.drawDataRow(rowStructure, currentRowNum.incrementAndGet(), item, cachedDataRowStyle,
           sheet);
     });
-    rowStructure.setGenerated(true);
-    rowStructure.setEndRowNum(currentRowNum.get());
   }
 
   private Map<String, CellStyle> createCachedDataRowStyle(RowStructure rowStructure) {
@@ -169,11 +164,11 @@ public class ExcelGenerator {
 
   private void drawDataRow(
       RowStructure rowStructure, int rowNum, Object item, Map<String, CellStyle> cachedDataRowStyle,
-      SXSSFSheet sheet) {
+      Sheet sheet) {
 
     DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
 
-    SXSSFRow row = sheet.createRow(rowNum);
+    Row row = sheet.createRow(rowNum);
     if (annotation.isUseDataHeightInPoints()) {
       row.setHeightInPoints(annotation.getDataHeightInPoints());
     }
@@ -181,7 +176,7 @@ public class ExcelGenerator {
     List<CellStructure> cells = rowStructure.getCells();
     cells.forEach(cellStructure -> {
       CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      SXSSFCell cell = row.createCell(
+      Cell cell = row.createCell(
           cellAnnotation.getColumn(), cellAnnotation.getCellType().toExcelCellType()
       );
       this.getCachedDataRowStyle(cachedDataRowStyle, cellStructure.getFieldName())
@@ -197,18 +192,18 @@ public class ExcelGenerator {
             String.format("can not find field from data item, %s", cellStructure.getFieldName()),
             e);
       }
-      this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue);
+      this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue, cellStructure, rowNum);
     });
   }
 
-  private void drawDataHeaderRow(DataRowsAnnotation annotation, int rowNum, SXSSFSheet sheet) {
-    SXSSFRow row = sheet.createRow(rowNum);
+  private void drawDataHeaderRow(DataRowsAnnotation annotation, int rowNum, Sheet sheet) {
+    Row row = sheet.createRow(rowNum);
     if (annotation.isUseHeaderHeightInPoints()) {
       row.setHeightInPoints(annotation.getHeaderHeightInPoints());
     }
     annotation.getHeaders().forEach(headerAnnotation -> {
       CellStyle cellStyle = this.createCellStyle(headerAnnotation.getStyle());
-      SXSSFCell cell = row.createCell(
+      Cell cell = row.createCell(
           headerAnnotation.getColumn(), org.apache.poi.ss.usermodel.CellType.STRING
       );
       cell.setCellStyle(cellStyle);
@@ -247,22 +242,6 @@ public class ExcelGenerator {
     return cellStyle;
   }
 
-  @SuppressWarnings("unchecked")
-  private <T> Collection<T> findRowDataCollection(RowStructure rowStructure) {
-    try {
-      Field sheetField = rowStructure.getSheetField();
-      Object sheetObj = sheetField.get(this.excelDto);
-      if (sheetObj == null) {
-        return null;
-      }
-      Field rowField = rowStructure.getField();
-      return (Collection<T>) rowField.get(sheetObj);
-    } catch (IllegalAccessException e) {
-      throw new ExcelGenerateException(
-          String.format("can not find data row collection, %s", rowStructure.getFieldName()), e);
-    }
-  }
-
   private Object findCellValue(CellStructure cellStructure) {
     Field sheetField = cellStructure.getSheetField();
     try {
@@ -284,6 +263,11 @@ public class ExcelGenerator {
   }
 
   private void bindCellValue(Cell cell, CellType cellType, Object value) {
+    this.bindCellValue(cell, cellType, value, null, 0);
+  }
+
+  private void bindCellValue(Cell cell, CellType cellType, Object value,
+      CellStructure cellStructure, int rowIndex) {
     if (value == null) {
       return;
     }
@@ -307,8 +291,8 @@ public class ExcelGenerator {
         }
         break;
       case FORMULA:
-        if (value instanceof String) {
-          this.formulaHelper.addFormula(cell, (String) value);
+        if (value instanceof String && cellStructure != null) {
+          this.formulaHelper.applyFormula(cell, (String) value, cellStructure, rowIndex);
         }
         break;
       case DATE:

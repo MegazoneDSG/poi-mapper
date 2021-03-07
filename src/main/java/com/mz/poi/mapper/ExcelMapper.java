@@ -1,10 +1,8 @@
 package com.mz.poi.mapper;
 
-import com.mz.poi.mapper.exception.ExcelConvertException;
+import com.mz.poi.mapper.exception.ExcelReadException;
 import com.mz.poi.mapper.structure.ExcelStructure;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -15,42 +13,35 @@ public class ExcelMapper {
   }
 
   public static <T> T fromExcel(
-      XSSFWorkbook workbook, final Class<T> excelDtoType) {
+      Workbook workbook, final Class<T> excelDtoType) {
+    if (workbook instanceof SXSSFWorkbook) {
+      throw new ExcelReadException("Not support read operation for SXSSFWorkbook");
+    }
     return new ExcelReader(workbook).read(excelDtoType);
   }
 
   public static <T> T fromExcel(
-      XSSFWorkbook workbook, final Class<T> excelDtoType, final ExcelStructure excelStructure) {
+      Workbook workbook, final Class<T> excelDtoType, final ExcelStructure excelStructure) {
+    if (workbook instanceof SXSSFWorkbook) {
+      throw new ExcelReadException("Not support read operation for SXSSFWorkbook");
+    }
     return new ExcelReader(workbook).read(excelDtoType, excelStructure);
   }
 
-  public static <T> T fromExcel(
-      SXSSFWorkbook workbook, final Class<T> excelDtoType) {
-    return new ExcelReader(convert(workbook)).read(excelDtoType);
+  public static Workbook toExcel(Object excelDto) {
+    return new ExcelGenerator(excelDto, new XSSFWorkbook()).generate();
   }
 
-  public static <T> T fromExcel(
-      SXSSFWorkbook workbook, final Class<T> excelDtoType, final ExcelStructure excelStructure) {
-    return new ExcelReader(convert(workbook)).read(excelDtoType, excelStructure);
+  public static Workbook toExcel(Object excelDto, final ExcelStructure excelStructure) {
+    return new ExcelGenerator(excelDto, new XSSFWorkbook()).generate(excelStructure);
   }
 
-  public static SXSSFWorkbook toExcel(Object excelDto) {
-    return new ExcelGenerator(excelDto).generate();
+  public static Workbook toExcel(Object excelDto, Workbook workbook) {
+    return new ExcelGenerator(excelDto, workbook).generate();
   }
 
-  public static SXSSFWorkbook toExcel(Object excelDto, final ExcelStructure excelStructure) {
-    return new ExcelGenerator(excelDto).generate(excelStructure);
-  }
-
-  private static XSSFWorkbook convert(SXSSFWorkbook workbook) {
-    try {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      workbook.write(out);
-      workbook.close();
-      ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
-      return new XSSFWorkbook(in);
-    } catch (IOException ex) {
-      throw new ExcelConvertException("Failed to convert SXSSFWorkbook to XSSFWorkbook ", ex);
-    }
+  public static Workbook toExcel(Object excelDto, final ExcelStructure excelStructure,
+      Workbook workbook) {
+    return new ExcelGenerator(excelDto, workbook).generate(excelStructure);
   }
 }

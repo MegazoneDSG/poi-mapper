@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
@@ -82,7 +82,7 @@ public class ExcelMapperSpec {
   @Test
   public void model_to_excel() throws IOException {
     PurchaseOrderTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
+    Workbook excel = ExcelMapper.toExcel(model);
     File file = new File("test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);

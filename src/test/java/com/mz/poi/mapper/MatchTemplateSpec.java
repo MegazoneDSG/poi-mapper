@@ -9,8 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.Test;
 
 
@@ -49,7 +48,7 @@ public class MatchTemplateSpec {
   @Test
   public void model_to_excel() throws IOException {
     MatchTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
+    Workbook excel = ExcelMapper.toExcel(model);
     File file = new File("match_test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
@@ -59,7 +58,7 @@ public class MatchTemplateSpec {
   @Test
   public void excel_to_model() {
     MatchTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
+    Workbook excel = ExcelMapper.toExcel(model);
     MatchTemplate fromModel = ExcelMapper.fromExcel(excel, MatchTemplate.class);
 
     assert fromModel.getSheet().getMatchTestTable().size() == 4;

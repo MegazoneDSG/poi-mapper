@@ -15,7 +15,7 @@ repositories {
     maven { url 'https://github.com/MegazoneDSG/maven-repo/raw/master/snapshots' }
 }
 dependencies {
-    compile "com.mz:poi-mapper:1.0.8-SNAPSHOT"
+    compile "com.mz:poi-mapper:1.0.9-SNAPSHOT"
 }
 ```
 
@@ -94,7 +94,7 @@ public class ExcelMapperSpec {
   @Test
   public void model_to_excel() throws IOException {
     PurchaseOrderTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
+    Workbook excel = ExcelMapper.toExcel(model);
   }
 }
 ```
@@ -107,11 +107,22 @@ public class ExcelMapperSpec {
   @Test
   public void excel_to_model() {
     PurchaseOrderTemplate model = this.createModel();
-    SXSSFWorkbook excel = ExcelMapper.toExcel(model);
-
-    //fromExcel supports both XSSFWorkbook and SXSSFWorkbook
+    Workbook excel = ExcelMapper.toExcel(model);
     PurchaseOrderTemplate fromModel = ExcelMapper.fromExcel(excel, PurchaseOrderTemplate.class);
   }
+}
+```
+
+## Model to Streaming Excel (SXSSF)
+
+```java
+public class ExcelMapperSpec {
+
+  @Test
+    public void model_to_stream_excel() throws IOException {
+      PurchaseOrderTemplate model = this.createModel();
+      Workbook excel = ExcelMapper.toExcel(model, new SXSSFWorkbook(50));
+    }
 }
 ```
 

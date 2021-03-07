@@ -15,7 +15,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -43,202 +42,23 @@ public class ExcelStructure {
             String.format("No such sheet of %s fieldName", fieldName)));
   }
 
-  public void resetRowGeneratedStatus() {
+  public void prepareReadStructure() {
     this.sheets.forEach(sheetStructure -> {
       sheetStructure.getRows().forEach(rowStructure -> {
-        rowStructure.generated = false;
-        rowStructure.startRowNum = 0;
-        rowStructure.endRowNum = 0;
+        rowStructure.setRead(false);
+        rowStructure.setStartRowNum(0);
+        rowStructure.setEndRowNum(0);
       });
     });
   }
 
-  @Getter
-  @NoArgsConstructor
-  public static class SheetStructure {
-
-    private SheetAnnotation annotation;
-    private Field field;
-    private String fieldName;
-    private List<RowStructure> rows = new ArrayList<>();
-
-    public void setAnnotation(SheetAnnotation annotation) {
-      this.annotation = annotation;
-    }
-
-    public void setRows(List<RowStructure> rows) {
-      this.rows = rows;
-    }
-
-    public RowStructure getRow(String fieldName) {
-      return this.rows.stream()
-          .filter(rowStructure -> rowStructure.getFieldName().equals(fieldName))
-          .findFirst()
-          .orElseThrow(() -> new ExcelStructureException(
-              String.format("No such row of %s fieldName", fieldName)));
-    }
-
-    public boolean isAllRowsGenerated() {
-      return this.rows.stream()
-          .allMatch(rowStructure -> rowStructure.generated);
-    }
-
-    public RowStructure findRowByFieldName(String fieldName) {
-      return this.rows.stream()
-          .filter(rowStructure -> rowStructure.fieldName.equals(fieldName))
-          .findAny()
-          .orElseThrow(() ->
-              new ExcelStructureException(String.format("%s row not founded", fieldName))
-          );
-    }
-
-    public RowStructure findRowByRowIndex(int rowNum) {
-      return this.rows.stream()
-          .filter(rowStructure -> rowStructure.generated)
-          .filter(rowStructure ->
-              rowStructure.startRowNum <= rowNum && rowStructure.endRowNum >= rowNum)
-          .findAny()
-          .orElseThrow(() ->
-              new ExcelStructureException(String.format("row of index %s not founded", rowNum))
-          );
-    }
-
-    public RowStructure nextRowStructure() {
-      return this.rows.stream()
-          .filter(rowStructure -> !rowStructure.generated)
-          .filter(rowStructure -> {
-            if (rowStructure.isAfterRow()) {
-              RowStructure beforeRowStructure = this.findRowByFieldName(
-                  rowStructure.getAnnotation().getRowAfter()
-              );
-              if (!beforeRowStructure.isGenerated()) {
-                return false;
-              }
-              if (rowStructure.isDataRow()) {
-                rowStructure.startRowNum = beforeRowStructure.endRowNum +
-                    rowStructure.getAnnotation().getRowAfterOffset() + 1;
-              } else {
-                rowStructure.startRowNum = beforeRowStructure.endRowNum +
-                    rowStructure.getAnnotation().getRowAfterOffset() + 1;
-                rowStructure.endRowNum = rowStructure.startRowNum;
-              }
-            } else {
-              if (rowStructure.isDataRow()) {
-                rowStructure.startRowNum = rowStructure.getAnnotation().getRow();
-              } else {
-                rowStructure.startRowNum = rowStructure.getAnnotation().getRow();
-                rowStructure.endRowNum = rowStructure.startRowNum;
-              }
-            }
-            return true;
-          })
-          .findFirst()
-          .orElseThrow(() ->
-              new ExcelStructureException("not found nextRowStructure")
-          );
-    }
-
-    @Builder
-    public SheetStructure(
-        SheetAnnotation annotation, Field field, String fieldName) {
-      this.annotation = annotation;
-      this.field = field;
-      this.fieldName = fieldName;
-    }
-  }
-
-  @Getter
-  @NoArgsConstructor
-  public static class RowStructure {
-
-    private AbstractRowAnnotation annotation;
-    private Field sheetField;
-    private Field field;
-    private String fieldName;
-    private List<CellStructure> cells = new ArrayList<>();
-
-    public void setAnnotation(AbstractRowAnnotation annotation) {
-      this.annotation = annotation;
-    }
-
-    public void setCells(List<CellStructure> cells) {
-      this.cells = cells;
-    }
-
-    public CellStructure getCell(String fieldName) {
-      return this.cells.stream()
-          .filter(cellStructure -> cellStructure.getFieldName().equals(fieldName))
-          .findFirst()
-          .orElseThrow(() -> new ExcelStructureException(
-              String.format("No such cell of %s fieldName", fieldName)));
-    }
-
-    public boolean isAfterRow() {
-      String rowAfter = this.annotation.getRowAfter();
-      return rowAfter != null && rowAfter.length() > 0;
-    }
-
-    public boolean isDataRow() {
-      return this.annotation instanceof DataRowsAnnotation;
-    }
-
-    public boolean isDataRowAndHideHeader() {
-      if (this.annotation instanceof DataRowsAnnotation) {
-        return ((DataRowsAnnotation) this.annotation).isHideHeader();
-      }
-      return false;
-    }
-
-    private boolean generated;
-    private int startRowNum;
-    private int endRowNum;
-
-    public void setGenerated(boolean generated) {
-      this.generated = generated;
-    }
-
-    public void setStartRowNum(int startRowNum) {
-      this.startRowNum = startRowNum;
-    }
-
-    public void setEndRowNum(int endRowNum) {
-      this.endRowNum = endRowNum;
-    }
-
-    @Builder
-    public RowStructure(
-        AbstractRowAnnotation annotation, Field sheetField, Field field, String fieldName) {
-      this.sheetField = sheetField;
-      this.field = field;
-      this.annotation = annotation;
-      this.fieldName = fieldName;
-    }
-  }
-
-  @Getter
-  @NoArgsConstructor
-  public static class CellStructure {
-
-    private CellAnnotation annotation;
-    private Field sheetField;
-    private Field rowField;
-    private Field field;
-    private String fieldName;
-
-    public void setAnnotation(CellAnnotation annotation) {
-      this.annotation = annotation;
-    }
-
-    @Builder
-    public CellStructure(
-        CellAnnotation annotation, Field sheetField, Field rowField, Field field,
-        String fieldName) {
-      this.sheetField = sheetField;
-      this.rowField = rowField;
-      this.annotation = annotation;
-      this.field = field;
-      this.fieldName = fieldName;
-    }
+  public void prepareGenerateStructure(Object excelDto) {
+    this.sheets.forEach(sheetStructure -> {
+      sheetStructure.getRows().forEach(rowStructure -> {
+        rowStructure.setCalculated(false);
+        rowStructure.calculateRowNum(excelDto);
+      });
+    });
   }
 
   public ExcelStructure build(Class<?> dtoType) {
@@ -259,6 +79,7 @@ public class ExcelStructure {
         })
         .map(field -> {
           SheetStructure sheetStructure = SheetStructure.builder()
+              .excelStructure(this)
               .annotation(
                   new SheetAnnotation(
                       field.getAnnotation(Sheet.class),
@@ -272,7 +93,8 @@ public class ExcelStructure {
           return sheetStructure;
         })
         .peek(sheetStructure ->
-            Arrays.stream(InheritedFieldHelper.getDeclaredFields(sheetStructure.field.getType()))
+            Arrays
+                .stream(InheritedFieldHelper.getDeclaredFields(sheetStructure.getField().getType()))
                 .filter(field -> {
                   field.setAccessible(true);
                   Row row = field.getAnnotation(Row.class);
@@ -283,7 +105,8 @@ public class ExcelStructure {
                 })
                 .map(field -> {
                   RowStructure rowStructure = RowStructure.builder()
-                      .sheetField(sheetStructure.field)
+                      .sheetStructure(sheetStructure)
+                      .sheetField(sheetStructure.getField())
                       .field(field)
                       .fieldName(field.getName())
                       .build();
@@ -292,28 +115,29 @@ public class ExcelStructure {
                     rowStructure.setAnnotation(
                         new RowAnnotation(
                             field.getAnnotation(Row.class),
-                            sheetStructure.annotation.getDefaultStyle()
+                            sheetStructure.getAnnotation().getDefaultStyle()
                         )
                     );
                   } else {
                     rowStructure.setAnnotation(
                         new DataRowsAnnotation(
                             field.getAnnotation(DataRows.class),
-                            sheetStructure.annotation.getDefaultStyle()
+                            sheetStructure.getAnnotation().getDefaultStyle()
                         )
                     );
                   }
-                  sheetStructure.rows.add(rowStructure);
+                  sheetStructure.getRows().add(rowStructure);
                   return rowStructure;
                 })
                 .forEach(rowStructure -> {
                   Field[] fields;
-                  boolean isRow = rowStructure.annotation instanceof RowAnnotation;
+                  boolean isRow = rowStructure.getAnnotation() instanceof RowAnnotation;
                   if (isRow) {
-                    fields = InheritedFieldHelper.getDeclaredFields(rowStructure.field.getType());
+                    fields = InheritedFieldHelper
+                        .getDeclaredFields(rowStructure.getField().getType());
                   } else {
                     ParameterizedType genericType =
-                        (ParameterizedType) rowStructure.field.getGenericType();
+                        (ParameterizedType) rowStructure.getField().getGenericType();
                     Class<?> dataRowClass = (Class<?>) genericType.getActualTypeArguments()[0];
                     fields = InheritedFieldHelper.getDeclaredFields(dataRowClass);
                   }
@@ -326,27 +150,28 @@ public class ExcelStructure {
                       })
                       .forEach(field -> {
                         CellStructure cellStructure = CellStructure.builder()
+                            .rowStructure(rowStructure)
                             .annotation(
                                 new CellAnnotation(
                                     field.getAnnotation(Cell.class),
                                     isRow ?
-                                        ((RowAnnotation) rowStructure.annotation)
+                                        ((RowAnnotation) rowStructure.getAnnotation())
                                             .getDefaultStyle() :
-                                        ((DataRowsAnnotation) rowStructure.annotation)
+                                        ((DataRowsAnnotation) rowStructure.getAnnotation())
                                             .getDataStyle())
                             )
-                            .sheetField(rowStructure.sheetField)
-                            .rowField(rowStructure.field)
+                            .sheetField(rowStructure.getSheetField())
+                            .rowField(rowStructure.getField())
                             .field(field)
                             .fieldName(field.getName())
                             .build();
-                        rowStructure.cells.add(cellStructure);
+                        rowStructure.getCells().add(cellStructure);
                       });
 
                   if (!isRow) {
-                    Match match = ((DataRowsAnnotation) rowStructure.annotation).getMatch();
+                    Match match = ((DataRowsAnnotation) rowStructure.getAnnotation()).getMatch();
                     if (Match.REQUIRED.equals(match)) {
-                      boolean requiredCellPresent = rowStructure.cells.stream()
+                      boolean requiredCellPresent = rowStructure.getCells().stream()
                           .anyMatch(cellStructure -> cellStructure.getAnnotation().isRequired());
                       if (!requiredCellPresent) {
                         throw new ExcelStructureException(

@@ -12,6 +12,10 @@ public class ExcelReadException extends RuntimeException {
 
   private ReadExceptionAddress readExceptionAddress = new ReadExceptionAddress();
 
+  public ExcelReadException(String message) {
+    super(message);
+  }
+
   public ExcelReadException(String message, ReadExceptionAddress readExceptionAddress) {
     super(buildExcelAddressMessage(message, readExceptionAddress));
     this.readExceptionAddress = readExceptionAddress;

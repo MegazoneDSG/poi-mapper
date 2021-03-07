@@ -7,13 +7,13 @@ import com.mz.poi.mapper.helper.DateFormatHelper;
 import com.mz.poi.mapper.helper.FormulaHelper;
 import com.mz.poi.mapper.helper.InheritedFieldHelper;
 import com.mz.poi.mapper.structure.CellAnnotation;
+import com.mz.poi.mapper.structure.CellStructure;
 import com.mz.poi.mapper.structure.CellType;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
 import com.mz.poi.mapper.structure.ExcelStructure;
-import com.mz.poi.mapper.structure.ExcelStructure.CellStructure;
-import com.mz.poi.mapper.structure.ExcelStructure.RowStructure;
-import com.mz.poi.mapper.structure.ExcelStructure.SheetStructure;
+import com.mz.poi.mapper.structure.RowStructure;
 import com.mz.poi.mapper.structure.SheetAnnotation;
+import com.mz.poi.mapper.structure.SheetStructure;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.math.BigDecimal;
@@ -30,10 +30,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFRow;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.BeanUtils;
 
 @Getter
@@ -41,9 +40,9 @@ public class ExcelReader {
 
   private ExcelStructure structure;
   private FormulaHelper formulaHelper;
-  private XSSFWorkbook workbook;
+  private Workbook workbook;
 
-  public ExcelReader(XSSFWorkbook workbook) {
+  public ExcelReader(Workbook workbook) {
     this.workbook = workbook;
     this.formulaHelper = new FormulaHelper();
   }
@@ -57,7 +56,7 @@ public class ExcelReader {
     if (this.structure == null) {
       this.structure = new ExcelStructure().build(excelDtoType);
     }
-    this.structure.resetRowGeneratedStatus();
+    this.structure.prepareReadStructure();
     T excelDto = BeanUtils.instantiateClass(excelDtoType);
 
     List<SheetStructure> sheets = this.structure.getSheets();
@@ -65,7 +64,7 @@ public class ExcelReader {
         Comparator.comparing(sheetStructure -> sheetStructure.getAnnotation().getIndex())
     ).forEach(sheetStructure -> {
       SheetAnnotation annotation = sheetStructure.getAnnotation();
-      XSSFSheet sheet = this.workbook.getSheetAt(annotation.getIndex());
+      Sheet sheet = this.workbook.getSheetAt(annotation.getIndex());
 
       //init new sheet class
       Field sheetField = sheetStructure.getField();
@@ -78,8 +77,8 @@ public class ExcelReader {
             new ReadExceptionAddress(annotation.getIndex()));
       }
 
-      while (!sheetStructure.isAllRowsGenerated()) {
-        RowStructure rowStructure = sheetStructure.nextRowStructure();
+      while (!sheetStructure.isAllRowsRead()) {
+        RowStructure rowStructure = sheetStructure.nextReadRowStructure();
         if (!rowStructure.isDataRow()) {
           this.readRow(rowStructure, sheet, sheetObj);
         } else {
@@ -90,7 +89,7 @@ public class ExcelReader {
     return excelDto;
   }
 
-  private void readRow(RowStructure rowStructure, XSSFSheet sheet, Object sheetObj) {
+  private void readRow(RowStructure rowStructure, Sheet sheet, Object sheetObj) {
     //init new row class
     Field rowField = rowStructure.getField();
     rowField.setAccessible(true);
@@ -104,22 +103,22 @@ public class ExcelReader {
       );
     }
 
-    XSSFRow row = sheet.getRow(rowStructure.getStartRowNum());
+    Row row = sheet.getRow(rowStructure.getStartRowNum());
     if (row == null) {
-      rowStructure.setGenerated(true);
+      rowStructure.setRead(true);
       return;
     }
     List<CellStructure> cells = rowStructure.getCells();
     cells.forEach(cellStructure -> {
       CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      XSSFCell cell = row.getCell(cellAnnotation.getColumn());
+      Cell cell = row.getCell(cellAnnotation.getColumn());
       this.bindCellValue(cell, cellStructure, rowObj);
     });
 
-    rowStructure.setGenerated(true);
+    rowStructure.setRead(true);
   }
 
-  private void readDataRows(RowStructure rowStructure, XSSFSheet sheet, Object sheetObj) {
+  private void readDataRows(RowStructure rowStructure, Sheet sheet, Object sheetObj) {
     //init new data row class
     List collection = new ArrayList<>();
     try {
@@ -148,14 +147,14 @@ public class ExcelReader {
         currentRowNum.decrementAndGet(); // rollback current rowNumber
       }
     }
-    rowStructure.setGenerated(true);
+    rowStructure.setRead(true);
     rowStructure.setEndRowNum(currentRowNum.get());
   }
 
   private boolean readDataRow(
-      RowStructure rowStructure, int rowNum, XSSFSheet sheet, List collection) {
+      RowStructure rowStructure, int rowNum, Sheet sheet, List collection) {
 
-    XSSFRow row = sheet.getRow(rowNum);
+    Row row = sheet.getRow(rowNum);
     if (row == null) {
       return false;
     }
@@ -181,28 +180,28 @@ public class ExcelReader {
     return false;
   }
 
-  private boolean isNotBlankMatch(RowStructure rowStructure, XSSFRow row, Object rowObj) {
+  private boolean isNotBlankMatch(RowStructure rowStructure, Row row, Object rowObj) {
     boolean isMatch = rowStructure.getCells().stream()
         .anyMatch(cellStructure -> {
           int column = cellStructure.getAnnotation().getColumn();
-          XSSFCell cell = row.getCell(column);
+          Cell cell = row.getCell(column);
           return !(cell == null
               || cell.getCellType() == org.apache.poi.ss.usermodel.CellType.BLANK);
         });
     List<CellStructure> cells = rowStructure.getCells();
     cells.forEach(cellStructure -> {
       CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      XSSFCell cell = row.getCell(cellAnnotation.getColumn());
+      Cell cell = row.getCell(cellAnnotation.getColumn());
       this.bindCellValue(cell, cellStructure, rowObj);
     });
     return isMatch;
   }
 
-  private boolean isRequiredMatch(RowStructure rowStructure, XSSFRow row, Object rowObj) {
+  private boolean isRequiredMatch(RowStructure rowStructure, Row row, Object rowObj) {
     AtomicBoolean isMatch = new AtomicBoolean(true);
     rowStructure.getCells().forEach(cellStructure -> {
       CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      XSSFCell cell = row.getCell(cellAnnotation.getColumn());
+      Cell cell = row.getCell(cellAnnotation.getColumn());
       boolean isBind = this.bindCellValue(cell, cellStructure, rowObj);
       if (cellAnnotation.isRequired() && !isBind) {
         isMatch.set(false);
@@ -211,11 +210,11 @@ public class ExcelReader {
     return isMatch.get();
   }
 
-  private boolean isAllMatch(RowStructure rowStructure, XSSFRow row, Object rowObj) {
+  private boolean isAllMatch(RowStructure rowStructure, Row row, Object rowObj) {
     AtomicBoolean isMatch = new AtomicBoolean(true);
     rowStructure.getCells().forEach(cellStructure -> {
       CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      XSSFCell cell = row.getCell(cellAnnotation.getColumn());
+      Cell cell = row.getCell(cellAnnotation.getColumn());
       boolean isBind = this.bindCellValue(cell, cellStructure, rowObj);
       if (!isBind) {
         isMatch.set(false);
