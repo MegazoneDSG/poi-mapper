@@ -3,7 +3,6 @@ package com.mz.poi.mapper.helper;
 import com.mz.poi.mapper.exception.ExcelGenerateException;
 import com.mz.poi.mapper.structure.CellStructure;
 import com.mz.poi.mapper.structure.RowStructure;
-import com.mz.poi.mapper.structure.SheetStructure;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,9 +26,7 @@ public class FormulaHelper {
       if (split.length == 2 && "this".equals(split[0])) {
         cellAddress = this.getSelfDataRowCellAddress(cellStructure, addressStr, rowIndex);
       } else if (split.length == 2) {
-        cellAddress = this.getRowCellAddress(cellStructure, addressStr);
-      } else if (split.length == 3) {
-        cellAddress = this.getIndexedDataRowCellAddress(cellStructure, addressStr);
+        cellAddress = this.getCellAddress(cellStructure, addressStr);
       }
       String finalAddress = cellAddress.orElseThrow(() ->
           new ExcelGenerateException(String.format("Not found cellAddress %s", addressStr)));
@@ -38,72 +35,139 @@ public class FormulaHelper {
     cell.setCellFormula(formula);
   }
 
-  private Optional<String> getRowCellAddress(CellStructure cellStructure, String addressStr) {
+//  private Optional<String> getRowCellAddress(CellStructure cellStructure, String addressStr) {
+//    String[] split = addressStr.split("\\.");
+//    String rowFieldName = split[0];
+//    String cellFieldName = split[1];
+//    RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
+//        .findRowByFieldName(rowFieldName);
+//    return rowStructure.getCells().stream()
+//        .filter(_cellStructure ->
+//            _cellStructure.getFieldName().equals(cellFieldName))
+//        .map(_cellStructure ->
+//            new CellAddress(
+//                rowStructure.getStartRowNum(),
+//                _cellStructure.getAnnotation().getColumn()
+//            ).formatAsString())
+//        .findFirst();
+//  }
+//
+//  private Optional<String> getIndexedDataRowCellAddress(CellStructure cellStructure,
+//      String addressStr) {
+//    String[] split = addressStr.split("\\.");
+//    String rowFieldName = split[0];
+//    String rowNumRex = split[1];
+//    String cellFieldName = split[2];
+//
+//    RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
+//        .findRowByFieldName(rowFieldName);
+//    int rowNum = 0;
+//    if ("last".equals(rowNumRex)) {
+//      rowNum = rowStructure.getEndRowNum();
+//    } else {
+//      String atRex = "at\\(([0-9]+?)\\)";
+//      Matcher m = Pattern.compile(atRex).matcher(rowNumRex);
+//      boolean matched = false;
+//      while (m.find()) {
+//        matched = true;
+//        int dataStartNum = rowStructure.getStartRowNum() + 1; // 헤더를 제외하고 시작해야 하기 때문에 1 추가한다.
+//        int at = Integer.parseInt(m.group(1));
+//        rowNum = dataStartNum + at;
+//      }
+//      if (!matched) {
+//        throw new ExcelGenerateException(String.format("Invalid formula pattern %s", addressStr));
+//      }
+//    }
+//
+//    int finalRowNum = rowNum;
+//    return rowStructure.getCells().stream()
+//        .filter(_cellStructure ->
+//            _cellStructure.getFieldName().equals(cellFieldName))
+//        .map(_cellStructure -> new CellAddress(
+//            finalRowNum, _cellStructure.getAnnotation().getColumn()
+//        ).formatAsString())
+//        .findFirst();
+//  }
+
+  private Optional<String> getCellAddress(CellStructure cellStructure, String addressStr) {
     String[] split = addressStr.split("\\.");
-    String rowFieldName = split[0];
-    String cellFieldName = split[1];
+    String rowNumRex = getIndexRex(split[0]);
+    String rowFieldName = rowNumRex == null ? split[0] : split[0].replace("[" + rowNumRex + "]", "");
+    String cellNumRex = getIndexRex(split[1]);
+    String cellFieldName = cellNumRex == null ? split[1] : split[1].replace("[" + cellNumRex + "]", "");
+
     RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
         .findRowByFieldName(rowFieldName);
-    return rowStructure.getCells().stream()
-        .filter(_cellStructure ->
-            _cellStructure.getFieldName().equals(cellFieldName))
-        .map(_cellStructure ->
-            new CellAddress(
-                rowStructure.getStartRowNum(),
-                _cellStructure.getAnnotation().getColumn()
-            ).formatAsString())
-        .findFirst();
-  }
-
-  private Optional<String> getIndexedDataRowCellAddress(CellStructure cellStructure,
-      String addressStr) {
-    String[] split = addressStr.split("\\.");
-    String rowFieldName = split[0];
-    String rowNumRex = split[1];
-    String cellFieldName = split[2];
-
-    RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
-        .findRowByFieldName(rowFieldName);
+    if (!rowStructure.isDataRow() && rowNumRex != null) {
+      throw new ExcelGenerateException(String.format("Invalid formula pattern %s", addressStr));
+    }
     int rowNum = 0;
-    if ("last".equals(rowNumRex)) {
+    if (rowNumRex == null) {
+      rowNum = rowStructure.getStartRowNum();
+    } else if ("last".equals(rowNumRex)) {
       rowNum = rowStructure.getEndRowNum();
     } else {
-      String atRex = "at\\(([0-9]+?)\\)";
-      Matcher m = Pattern.compile(atRex).matcher(rowNumRex);
-      boolean matched = false;
-      while (m.find()) {
-        matched = true;
-        int dataStartNum = rowStructure.getStartRowNum() + 1; // 헤더를 제외하고 시작해야 하기 때문에 1 추가한다.
-        int at = Integer.parseInt(m.group(1));
-        rowNum = dataStartNum + at;
-      }
-      if (!matched) {
-        throw new ExcelGenerateException(String.format("Invalid formula pattern %s", addressStr));
-      }
+      rowNum = rowStructure.getStartRowNum() + Integer.parseInt(rowNumRex) +
+          (rowStructure.isDataRowAndHideHeader() ? 0 : 1);
     }
 
-    int finalRowNum = rowNum;
-    return rowStructure.getCells().stream()
-        .filter(_cellStructure ->
-            _cellStructure.getFieldName().equals(cellFieldName))
-        .map(_cellStructure -> new CellAddress(
-            finalRowNum, _cellStructure.getAnnotation().getColumn()
-        ).formatAsString())
-        .findFirst();
+    CellStructure cellByFieldName = rowStructure.findCellByFieldName(cellFieldName);
+    if (!cellByFieldName.isArrayCell() && cellNumRex != null) {
+      throw new ExcelGenerateException(String.format("Invalid formula pattern %s", addressStr));
+    }
+    int cellNum = 0;
+    int column = cellByFieldName.getAnnotation().getColumn();
+    int columnSize = cellByFieldName.getAnnotation().getColumnSize();
+    int cols = cellByFieldName.getAnnotation().getCols();
+    if (cellNumRex == null) {
+      cellNum = column;
+    } else if ("last".equals(cellNumRex)) {
+      cellNum = column + ((columnSize - 1) * cols);
+    } else {
+      cellNum = column + ((Integer.parseInt(cellNumRex)) * cols);
+    }
+    return Optional.of(new CellAddress(rowNum, cellNum).formatAsString());
   }
 
   private Optional<String> getSelfDataRowCellAddress(CellStructure cellStructure,
       String addressStr, int rowIndex) {
     String[] split = addressStr.split("\\.");
-    String cellFieldName = split[1];
+    String cellNumRex = getIndexRex(split[1]);
+    String cellFieldName = cellNumRex == null ? split[1] : split[1].replace("[" + cellNumRex + "]", "");
 
     RowStructure rowStructure = cellStructure.getRowStructure();
-    return rowStructure.getCells().stream()
-        .filter(_cellStructure ->
-            _cellStructure.getFieldName().equals(cellFieldName))
-        .map(_cellStructure -> new CellAddress(
-            rowIndex, _cellStructure.getAnnotation().getColumn()
-        ).formatAsString())
-        .findFirst();
+    CellStructure cellByFieldName = rowStructure.findCellByFieldName(cellFieldName);
+    if (!cellByFieldName.isArrayCell() && cellNumRex != null) {
+      throw new ExcelGenerateException(String.format("Invalid formula pattern %s", addressStr));
+    }
+    int cellNum = 0;
+    int column = cellByFieldName.getAnnotation().getColumn();
+    int columnSize = cellByFieldName.getAnnotation().getColumnSize();
+    int cols = cellByFieldName.getAnnotation().getCols();
+    if (cellNumRex == null) {
+      cellNum = column;
+    } else if ("last".equals(cellNumRex)) {
+      cellNum = column + ((columnSize - 1) * cols);
+    } else {
+      cellNum = column + ((Integer.parseInt(cellNumRex)) * cols);
+    }
+    return Optional.of(new CellAddress(rowIndex, cellNum).formatAsString());
+  }
+
+  public String getIndexRex(String fieldRex) {
+    String indexRex = "\\[(.+?)]";
+    Matcher m = Pattern.compile(indexRex).matcher(fieldRex);
+    String group = null;
+    while (m.find()) {
+      group = m.group(1);
+    }
+    if (group != null && !"last".equals(group)) {
+      try {
+        Integer.parseInt(group);
+      } catch (NumberFormatException e) {
+        throw new ExcelGenerateException(String.format("Invalid formula pattern %s", fieldRex));
+      }
+    }
+    return group;
   }
 }

@@ -6,6 +6,9 @@ Add annotations to your model you already have. And convert to Excel, or import 
 
 ![](https://user-images.githubusercontent.com/61041926/95656676-dee58000-0b4a-11eb-936e-3cc22d5a4432.png)
 
+- [Basic Usage](./README.md)
+- [Dynamic Array Cell](./array-cell.md)
+
 # Include
 
 ## Gradle setting
@@ -15,11 +18,11 @@ repositories {
     maven { url 'https://github.com/MegazoneDSG/maven-repo/raw/master/snapshots' }
 }
 dependencies {
-    compile "com.mz:poi-mapper:1.0.9-SNAPSHOT"
+    compile "com.mz:poi-mapper:1.1.0-SNAPSHOT"
 }
 ```
 
-# Usage
+# Basic Usage
 
 The sample model `PurchaseOrderTemplate` used in the photo at the top of the document is included in the package, and its usage is as follows.
 
@@ -210,8 +213,8 @@ public class OrderSheet {
       row = 2,
       match = Match.REQUIRED,
       headers = {
-          @Header(name = "VENDOR", column = 0, cols = 3),
-          @Header(name = "SHIP TO", column = 3, cols = 3)
+          @Header(name = "VENDOR", mappings = {"vendorTitle", "vendorValue"}),
+          @Header(name = "SHIP TO", mappings = {"toTitle", "toValue"})
       },
       headerStyle = @CellStyle(
           font = @Font(color = IndexedColors.WHITE),
@@ -226,11 +229,11 @@ public class OrderSheet {
       rowAfterOffset = 1,
       match = Match.REQUIRED,
       headers = {
-          @Header(name = "REQUESTER", column = 0),
-          @Header(name = "SHIP VIA", column = 1),
-          @Header(name = "F.O.B", column = 2),
-          @Header(name = "SHIPPING TERMS", column = 3, cols = 2),
-          @Header(name = "DELIVERY DATE", column = 5)
+          @Header(name = "REQUESTER", mappings = {"requester"}),
+          @Header(name = "SHIP VIA", mappings = {"via"}),
+          @Header(name = "F.O.B", mappings = {"fob"}),
+          @Header(name = "SHIPPING TERMS", mappings = {"terms"}),
+          @Header(name = "DELIVERY DATE", mappings = {"deliveryDate"})
       },
       headerStyle = @CellStyle(
           font = @Font(color = IndexedColors.WHITE),
@@ -251,11 +254,11 @@ public class OrderSheet {
       rowAfterOffset = 1,
       match = Match.REQUIRED,
       headers = {
-          @Header(name = "ITEM", column = 0),
-          @Header(name = "DESCRIPTION", column = 1, cols = 2),
-          @Header(name = "QTY", column = 3),
-          @Header(name = "UNIT PRICE", column = 4),
-          @Header(name = "TOTAL", column = 5)
+          @Header(name = "ITEM", mappings = {"name"}),
+          @Header(name = "DESCRIPTION", mappings = {"description"}),
+          @Header(name = "QTY", mappings = {"qty"}),
+          @Header(name = "UNIT PRICE", mappings = {"unitPrice"}),
+          @Header(name = "TOTAL", mappings = {"total"})
       },
       headerStyle = @CellStyle(
           font = @Font(color = IndexedColors.WHITE),
@@ -302,6 +305,7 @@ public class OrderSheet {
 | headerHeightInPoints | int | [@Sheet](#@Sheet).defaultRowHeightInPoints | Specified header row height. |
 | headerStyle | [@CellStyle](#CellStyle) | [@Sheet](#Sheet).defaultStyle | Default cell style of header row |
 | headers | Array of [@Header](#Header) | Empty | Array of Headers |
+| arrayHeaders | Array of [@ArrayHeader](#ArrayHeader) | Empty | Array of ArrayHeaders |
 | hideHeader | boolean | false | Whether hide headers or not |
 | dataHeightInPoints | int | [@Sheet](#@Sheet).defaultRowHeightInPoints | Specified data row height. |
 | dataStyle | [@CellStyle](#CellStyle) | [@Sheet](#Sheet).defaultStyle | Default cell style of data row |
@@ -325,11 +329,30 @@ Row recognition condition when converting Excel to model.
 |------------|--------|----------|-----------------------|
 | column | int | 0 | Index of column |
 | cols | int | 1 | The number of columns to be merged |
+| columnAfter | String | Empty String | If it is not empty, it is placed after a end of specific cell. You can specify the cell field name of the row model. |
+| columnAfterOffset | int | 0 | If columnAfter is specified, it is offset from the specified cell. |
 | cellType | [CellType](#CellType) | None(Required) | CellType of cell |
 | ignoreParse | boolean | false | When converting Excel to Model, do not bind values. |
 | required | boolean | false | Required value when converting Excel to Model. See [Match](#Match) |
 | headers | Array of [@Header](#Header) | Empty | Array of Headers |
 | style | [@CellStyle](#CellStyle) | [@Row](#Row).defaultStyle, [@DataRows](#DataRows).defaultStyle | cell style |
+
+## @ArrayCell
+
+### Annotation Description
+
+| attribute  | type | default | description |
+|------------|--------|----------|-----------------------|
+| column | int | 0 | Index of column |
+| cols | int | 1 | The number of columns to be merged |
+| columnAfter | String | Empty String | If it is not empty, it is placed after a end of specific cell. You can specify the cell field name of the row model. |
+| columnAfterOffset | int | 0 | If columnAfter is specified, it is offset from the specified cell. |
+| cellType | [CellType](#CellType) | None(Required) | CellType of cell |
+| ignoreParse | boolean | false | When converting Excel to Model, do not bind values. |
+| required | boolean | false | Required value when converting Excel to Model. See [Match](#Match) |
+| headers | Array of [@Header](#Header) | Empty | Array of Headers |
+| style | [@CellStyle](#CellStyle) | [@Row](#Row).defaultStyle, [@DataRows](#DataRows).defaultStyle | cell style |
+| size | int | 0 | The size of the array cells. When reading or writing cells, only the size is applied. You can resize dynamically at runtime by referring to the following documentation:The size of the array cells. When reading or writing cells, only the size is applied. [You can resize dynamically at runtime by referring to the following documentation](./array-cell.md) |
 
 ### CellType
 
@@ -342,9 +365,9 @@ This is the CellType enums. If the model class does not match CellType, it will 
 | BLANK | None | Ignore convert |
 | BOOLEAN | Boolean | - |
 | DATE | LocalDate,LocalDateTime | - |
-| FORMULA | String | You can use the [FumularAddressExpression](#FumularAddressExpression) to write native formulas in Excel with specific cell locations in the model. |
+| FORMULA | String | You can use the [FormulaAddressExpression](#FormulaAddressExpression) to write native formulas in Excel with specific cell locations in the model. |
 
-### FumularAddressExpression
+### FormulaAddressExpression
 
 It is an expression that converts a specific cell location in the model to an Excel address such as (A1,B2....)
 
@@ -352,10 +375,12 @@ It is an expression that converts a specific cell location in the model to an Ex
 
 | expression  | example | description |
 |------------|--------|--------|
-| {{[rowFiledName].[cellFieldName]}} | titleRow.title  | If titleRow's row is 0 and title's coumn is 0, return **A1** |
-| {{[rowFiledName].last.[cellFieldName]}} | itemTable.last.total  | Works only in DataRows. If itemTable's end row is 15 and total's coumn is 5, return **F16**. See [SummaryRow](#SummaryRow) sample |
-| {{[rowFiledName].at([DataIndex]).[cellFieldName]}} | itemTable.at(0).total  | Works only in DataRows. If itemTable's start row is 13 and total's coumn is 5, return **F14**. See [SummaryRow](#SummaryRow) sample |
-| {{this.[cellFieldName]}} | this.qty  | Works only in DataRows. expression `this` means cell's current row. If the qty's current row is 13 and qty's coumn is 3, return **D14**. See [ItemRow](#ItemRow) sample |
+| {{rowFiledName.cellFieldName}} | titleRow.title  | If titleRow's row is 0 and title's column is 0, return **A1** |
+| {{rowFiledName[last].cellFieldName}} | itemTable[last].total  | Works only in DataRows. If itemTable's end row is 15 and total's column is 5, return **F16**. See [SummaryRow](#SummaryRow) sample |
+| {{rowFiledName[Number].cellFieldName}} | itemTable[0].total  | Works only in DataRows. If itemTable's start row is 13 and total's column is 5, return **F14**. See [SummaryRow](#SummaryRow) sample |
+| {{rowFiledName.cellFieldName[last]}} | itemTable.qty[last]  | Works only in ArrayCell. See [Dynamic Array Cell](./array-cell.md) sample |
+| {{rowFiledName.cellFieldName[Number]}} | itemTable.qty[0]  | Works only in ArrayCell. See [Dynamic Array Cell](./array-cell.md) sample |
+| {{this.cellFieldName}} | this.qty  | Works only in DataRows. expression `this` means cell's current row. If the qty's current row is 13 and qty's coumn is 3, return **D14**. See [ItemRow](#ItemRow) sample |
 
 
 ### Row model samples includes cells.
@@ -524,7 +549,7 @@ public class SummaryRow {
       ),
       ignoreParse = true
   )
-  private String formula = "SUM({{itemTable.at(0).total}}:{{itemTable.last.total}})";
+  private String formula = "SUM({{itemTable[0].total}}:{{itemTable[last].total}})";
 }
 ```
 
@@ -576,10 +601,16 @@ In addition to BuiltinFormats, you can also use generic dateFormats (such as yyy
 
 | attribute  | type | default | description |
 |------------|--------|----------|-----------------------|
-| column | int | None(Required) | column index of datarows header |
-| name | int | None(Required) | column name of datarows header |
-| cols | int | 1 | The number of columns to be merged of datarows header |
+| mappings | Array of String | Empty | These are the cell field names of the datarow to be mapped. |
 | style | [@CellStyle](#CellStyle) | [@DataRows](#DataRows).defaultStyle | cell style |
+
+## @ArrayHeader
+
+| attribute  | type | default | description |
+|------------|--------|----------|-----------------------|
+| mapping | Array of String | Empty | The cell field name of the datarow to be mapped. |
+| style | [@CellStyle](#CellStyle) | [@DataRows](#DataRows).defaultStyle | cell style |
+| simpleNameExpression | String | {{index}} | Simply indicate the header name of the array cell using the provided index string. [YAt runtime, you can use a separate expression class to express more specific values](./array-cell.md) |
 
 ## @ColumnWidth
 

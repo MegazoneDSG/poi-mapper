@@ -1,9 +1,9 @@
 package com.mz.poi.mapper;
 
 
-import com.mz.poi.mapper.template.MatchTemplate;
-import com.mz.poi.mapper.template.MatchTemplate.MatchTestDataRow;
-import com.mz.poi.mapper.template.MatchTemplate.TestSheet;
+import com.mz.poi.mapper.example.other.MatchTemplate;
+import com.mz.poi.mapper.example.other.MatchTemplate.MatchTestDataRow;
+import com.mz.poi.mapper.example.other.MatchTemplate.TestSheet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

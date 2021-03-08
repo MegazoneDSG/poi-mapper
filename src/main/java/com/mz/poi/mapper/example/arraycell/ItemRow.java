@@ -1,13 +1,15 @@
-package com.mz.poi.mapper.sample;
+package com.mz.poi.mapper.example.arraycell;
 
+import com.mz.poi.mapper.annotation.ArrayCell;
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.CellStyle;
+import com.mz.poi.mapper.structure.CellType;
 import java.math.BigDecimal;
+import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import com.mz.poi.mapper.structure.CellType;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.IndexedColors;
 
@@ -24,22 +26,23 @@ public class ItemRow {
   private String name;
 
   @Cell(
-      column = 1,
+      columnAfter = "name",
       cols = 2,
       cellType = CellType.STRING,
       required = true
   )
   private String description;
 
-  @Cell(
-      column = 3,
+  @ArrayCell(
+      size = 4,
+      columnAfter = "description",
       cellType = CellType.NUMERIC,
       required = true
   )
-  private long qty;
+  private List<Integer> qty;
 
   @Cell(
-      column = 4,
+      columnAfter = "qty",
       cellType = CellType.NUMERIC,
       style = @CellStyle(dataFormat = "#,##0.00"),
       required = true
@@ -47,7 +50,7 @@ public class ItemRow {
   private BigDecimal unitPrice;
 
   @Cell(
-      column = 5,
+      columnAfter = "unitPrice",
       cellType = CellType.FORMULA,
       style = @CellStyle(
           dataFormat = "#,##0.00",
@@ -56,10 +59,10 @@ public class ItemRow {
       ),
       ignoreParse = true
   )
-  private String total = "product({{this.qty}},{{this.unitPrice}})";
+  private String total = "product(sum({{this.qty[0]}}:{{this.qty[last]}}),{{this.unitPrice}})";
 
   @Builder
-  public ItemRow(String name, String description, long qty, BigDecimal unitPrice) {
+  public ItemRow(String name, String description, List<Integer> qty, BigDecimal unitPrice) {
     this.name = name;
     this.description = description;
     this.qty = qty;

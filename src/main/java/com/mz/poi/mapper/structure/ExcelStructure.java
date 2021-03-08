@@ -1,5 +1,6 @@
 package com.mz.poi.mapper.structure;
 
+import com.mz.poi.mapper.annotation.ArrayCell;
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.DataRows;
 import com.mz.poi.mapper.annotation.Excel;
@@ -48,6 +49,11 @@ public class ExcelStructure {
         rowStructure.setRead(false);
         rowStructure.setStartRowNum(0);
         rowStructure.setEndRowNum(0);
+
+        rowStructure.getCells().forEach(cellStructure -> {
+          cellStructure.setCalculated(false);
+          cellStructure.calculateColumn();
+        });
       });
     });
   }
@@ -57,6 +63,11 @@ public class ExcelStructure {
       sheetStructure.getRows().forEach(rowStructure -> {
         rowStructure.setCalculated(false);
         rowStructure.calculateRowNum(excelDto);
+
+        rowStructure.getCells().forEach(cellStructure -> {
+          cellStructure.setCalculated(false);
+          cellStructure.calculateColumn();
+        });
       });
     });
   }
@@ -146,25 +157,42 @@ public class ExcelStructure {
                       .filter(field -> {
                         field.setAccessible(true);
                         Cell cell = field.getAnnotation(Cell.class);
-                        return cell != null;
+                        ArrayCell arrayCell = field.getAnnotation(ArrayCell.class);
+                        return cell != null ||
+                            (arrayCell != null &&
+                                Collection.class.isAssignableFrom(field.getType()));
                       })
                       .forEach(field -> {
                         CellStructure cellStructure = CellStructure.builder()
                             .rowStructure(rowStructure)
-                            .annotation(
-                                new CellAnnotation(
-                                    field.getAnnotation(Cell.class),
-                                    isRow ?
-                                        ((RowAnnotation) rowStructure.getAnnotation())
-                                            .getDefaultStyle() :
-                                        ((DataRowsAnnotation) rowStructure.getAnnotation())
-                                            .getDataStyle())
-                            )
                             .sheetField(rowStructure.getSheetField())
                             .rowField(rowStructure.getField())
                             .field(field)
                             .fieldName(field.getName())
                             .build();
+
+                        boolean isCell = field.getAnnotation(Cell.class) != null;
+                        if (isCell) {
+                          cellStructure.setAnnotation(
+                              new CellAnnotation(
+                                  field.getAnnotation(Cell.class),
+                                  isRow ?
+                                      ((RowAnnotation) rowStructure.getAnnotation())
+                                          .getDefaultStyle() :
+                                      ((DataRowsAnnotation) rowStructure.getAnnotation())
+                                          .getDataStyle())
+                          );
+                        } else {
+                          cellStructure.setAnnotation(
+                              new ArrayCellAnnotation(
+                                  field.getAnnotation(ArrayCell.class),
+                                  isRow ?
+                                      ((RowAnnotation) rowStructure.getAnnotation())
+                                          .getDefaultStyle() :
+                                      ((DataRowsAnnotation) rowStructure.getAnnotation())
+                                          .getDataStyle())
+                          );
+                        }
                         rowStructure.getCells().add(cellStructure);
                       });
 

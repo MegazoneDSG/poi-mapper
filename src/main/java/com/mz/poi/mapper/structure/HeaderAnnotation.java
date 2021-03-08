@@ -1,6 +1,9 @@
 package com.mz.poi.mapper.structure;
 
 import com.mz.poi.mapper.annotation.Header;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -8,17 +11,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class HeaderAnnotation {
+public class HeaderAnnotation extends AbstractHeaderAnnotation {
 
-  private int column;
   private String name;
-  private int cols;
-  CellStyleAnnotation style;
+  private List<String> mappings = new ArrayList<>();
 
   public HeaderAnnotation(Header header, CellStyleAnnotation headerDefaultStyle) {
-    this.column = header.column();
+    this.setStyle(new CellStyleAnnotation(header.style(), headerDefaultStyle));
     this.name = header.name();
-    this.cols = header.cols();
-    this.style = new CellStyleAnnotation(header.style(), headerDefaultStyle);
+    this.mappings = Arrays.asList(header.mappings());
   }
 }

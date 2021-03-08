@@ -1,13 +1,13 @@
 package com.mz.poi.mapper;
 
 
-import com.mz.poi.mapper.sample.InfoRow;
-import com.mz.poi.mapper.sample.ItemRow;
-import com.mz.poi.mapper.sample.OrderSheet;
-import com.mz.poi.mapper.sample.PurchaseOrderTemplate;
-import com.mz.poi.mapper.sample.ShipRow;
-import com.mz.poi.mapper.sample.SummaryRow;
-import com.mz.poi.mapper.sample.TitleRow;
+import com.mz.poi.mapper.example.basic.InfoRow;
+import com.mz.poi.mapper.example.basic.ItemRow;
+import com.mz.poi.mapper.example.basic.OrderSheet;
+import com.mz.poi.mapper.example.basic.PurchaseOrderTemplate;
+import com.mz.poi.mapper.example.basic.ShipRow;
+import com.mz.poi.mapper.example.basic.SummaryRow;
+import com.mz.poi.mapper.example.basic.TitleRow;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,7 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
 
-public class ExcelMapperSpec {
+public class BasicSpec {
 
   private PurchaseOrderTemplate createModel() {
     return PurchaseOrderTemplate

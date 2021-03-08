@@ -28,4 +28,6 @@ public @interface DataRows {
   boolean hideHeader() default false;
 
   Header[] headers() default {};
+
+  ArrayHeader[] arrayHeaders() default {};
 }

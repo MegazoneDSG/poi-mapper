@@ -48,16 +48,6 @@ public class SheetStructure {
         );
   }
 
-  public RowStructure findRowByRowIndex(int rowNum) {
-    return this.rows.stream()
-        .filter(rowStructure ->
-            rowStructure.getStartRowNum() <= rowNum && rowStructure.getEndRowNum() >= rowNum)
-        .findAny()
-        .orElseThrow(() ->
-            new ExcelStructureException(String.format("row of index %s not founded", rowNum))
-        );
-  }
-
   public RowStructure nextReadRowStructure() {
     return this.rows.stream()
         .filter(rowStructure -> !rowStructure.isRead())

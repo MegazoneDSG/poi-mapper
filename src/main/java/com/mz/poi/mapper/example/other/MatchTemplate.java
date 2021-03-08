@@ -1,4 +1,4 @@
-package com.mz.poi.mapper.template;
+package com.mz.poi.mapper.example.other;
 
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.CellStyle;
@@ -46,8 +46,8 @@ public class MatchTemplate {
         row = 0,
         match = Match.STOP_ON_BLANK,
         headers = {
-            @Header(name = "a", column = 0),
-            @Header(name = "b", column = 1)
+            @Header(name = "a", mappings = {"firstValue"}),
+            @Header(name = "b", mappings = {"secondValue"})
         }
     )
     private List<MatchTestDataRow> matchTestTable;

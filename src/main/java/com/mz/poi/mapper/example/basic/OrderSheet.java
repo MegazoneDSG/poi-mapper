@@ -1,4 +1,4 @@
-package com.mz.poi.mapper.sample;
+package com.mz.poi.mapper.example.basic;
 
 import com.mz.poi.mapper.annotation.CellStyle;
 import com.mz.poi.mapper.annotation.DataRows;
@@ -33,8 +33,8 @@ public class OrderSheet {
       row = 2,
       match = Match.REQUIRED,
       headers = {
-          @Header(name = "VENDOR", column = 0, cols = 3),
-          @Header(name = "SHIP TO", column = 3, cols = 3)
+          @Header(name = "VENDOR", mappings = {"vendorTitle", "vendorValue"}),
+          @Header(name = "SHIP TO", mappings = {"toTitle", "toValue"})
       },
       headerStyle = @CellStyle(
           font = @Font(color = IndexedColors.WHITE),
@@ -49,11 +49,11 @@ public class OrderSheet {
       rowAfterOffset = 1,
       match = Match.REQUIRED,
       headers = {
-          @Header(name = "REQUESTER", column = 0),
-          @Header(name = "SHIP VIA", column = 1),
-          @Header(name = "F.O.B", column = 2),
-          @Header(name = "SHIPPING TERMS", column = 3, cols = 2),
-          @Header(name = "DELIVERY DATE", column = 5)
+          @Header(name = "REQUESTER", mappings = {"requester"}),
+          @Header(name = "SHIP VIA", mappings = {"via"}),
+          @Header(name = "F.O.B", mappings = {"fob"}),
+          @Header(name = "SHIPPING TERMS", mappings = {"terms"}),
+          @Header(name = "DELIVERY DATE", mappings = {"deliveryDate"})
       },
       headerStyle = @CellStyle(
           font = @Font(color = IndexedColors.WHITE),
@@ -74,11 +74,11 @@ public class OrderSheet {
       rowAfterOffset = 1,
       match = Match.REQUIRED,
       headers = {
-          @Header(name = "ITEM", column = 0),
-          @Header(name = "DESCRIPTION", column = 1, cols = 2),
-          @Header(name = "QTY", column = 3),
-          @Header(name = "UNIT PRICE", column = 4),
-          @Header(name = "TOTAL", column = 5)
+          @Header(name = "ITEM", mappings = {"name"}),
+          @Header(name = "DESCRIPTION", mappings = {"description"}),
+          @Header(name = "QTY", mappings = {"qty"}),
+          @Header(name = "UNIT PRICE", mappings = {"unitPrice"}),
+          @Header(name = "TOTAL", mappings = {"total"})
       },
       headerStyle = @CellStyle(
           font = @Font(color = IndexedColors.WHITE),

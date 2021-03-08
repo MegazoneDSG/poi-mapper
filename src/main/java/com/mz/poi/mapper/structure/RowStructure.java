@@ -7,7 +7,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -76,13 +75,28 @@ public class RowStructure {
     this.endRowNum = endRowNum;
   }
 
+  public Object findRowData(Object excelDto) {
+    try {
+      Field sheetField = this.getSheetField();
+      Object sheetObj = sheetField.get(excelDto);
+      if (sheetObj == null) {
+        return null;
+      }
+      Field rowField = this.getField();
+      return rowField.get(sheetObj);
+    } catch (IllegalAccessException e) {
+      throw new ExcelGenerateException(
+          String.format("can not find data row collection, %s", this.getFieldName()), e);
+    }
+  }
+
   @SuppressWarnings("unchecked")
   public <T> Collection<T> findRowDataCollection(Object excelDto) {
     try {
       Field sheetField = this.getSheetField();
       Object sheetObj = sheetField.get(excelDto);
       if (sheetObj == null) {
-        return null;
+        return new ArrayList<>();
       }
       Field rowField = this.getField();
       return (Collection<T>) rowField.get(sheetObj);
@@ -93,8 +107,16 @@ public class RowStructure {
   }
 
   public int findRowDataCollectionSize(Object excelDto) {
-    return Optional.ofNullable(findRowDataCollection(excelDto))
-        .orElse(new ArrayList<>()).size();
+    return findRowDataCollection(excelDto).size();
+  }
+
+  public CellStructure findCellByFieldName(String fieldName) {
+    return this.cells.stream()
+        .filter(cellStructure -> cellStructure.getFieldName().equals(fieldName))
+        .findAny()
+        .orElseThrow(() ->
+            new ExcelStructureException(String.format("%s cell not founded", fieldName))
+        );
   }
 
   public void calculateRowNum(Object excelDto) {

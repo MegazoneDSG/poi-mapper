@@ -1,8 +1,13 @@
 package com.mz.poi.mapper;
 
 import com.mz.poi.mapper.exception.ExcelGenerateException;
+import com.mz.poi.mapper.expression.ArrayHeaderNameExpression;
 import com.mz.poi.mapper.helper.DateFormatHelper;
 import com.mz.poi.mapper.helper.FormulaHelper;
+import com.mz.poi.mapper.structure.AbstractCellAnnotation;
+import com.mz.poi.mapper.structure.AbstractHeaderAnnotation;
+import com.mz.poi.mapper.structure.ArrayCellAnnotation;
+import com.mz.poi.mapper.structure.ArrayHeaderAnnotation;
 import com.mz.poi.mapper.structure.CellAnnotation;
 import com.mz.poi.mapper.structure.CellStructure;
 import com.mz.poi.mapper.structure.CellStyleAnnotation;
@@ -10,13 +15,14 @@ import com.mz.poi.mapper.structure.CellType;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
 import com.mz.poi.mapper.structure.ExcelStructure;
 import com.mz.poi.mapper.structure.FontAnnotation;
+import com.mz.poi.mapper.structure.HeaderAnnotation;
 import com.mz.poi.mapper.structure.RowAnnotation;
 import com.mz.poi.mapper.structure.RowStructure;
 import com.mz.poi.mapper.structure.SheetAnnotation;
 import com.mz.poi.mapper.structure.SheetStructure;
-import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -24,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -88,34 +96,26 @@ public class ExcelGenerator {
               this.drawDataRows(rowStructure, sheet);
             }
           });
-      // this.formulaHelper.applySheetFormulas(sheetStructure);
     });
     return this.workbook;
   }
 
   private void drawRow(RowStructure rowStructure, Sheet sheet) {
-    Row row = sheet.createRow(rowStructure.getStartRowNum());
+    int rowIndex = rowStructure.getStartRowNum();
+    Row row = sheet.createRow(rowIndex);
 
     RowAnnotation rowAnnotation = (RowAnnotation) rowStructure.getAnnotation();
     if (rowAnnotation.isUseRowHeightInPoints()) {
       row.setHeightInPoints(rowAnnotation.getHeightInPoints());
     }
+    Object rowData = rowStructure.findRowData(excelDto);
     List<CellStructure> cells = rowStructure.getCells();
     cells.forEach(cellStructure -> {
-      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-
-      //스타일 적용
-      CellStyle cellStyle = this.createCellStyle(cellAnnotation.getStyle());
-      Cell cell = row.createCell(
-          cellAnnotation.getColumn(), cellAnnotation.getCellType().toExcelCellType()
-      );
-      cell.setCellStyle(cellStyle);
-      //cols 적용
-      this.mergeCell(cell, cellAnnotation.getColumn(), cellAnnotation.getCols());
-      //값 바인딩
-      Object cellValue = this.findCellValue(cellStructure);
-      this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue, cellStructure,
-          rowStructure.getStartRowNum());
+      if (cellStructure.getAnnotation() instanceof ArrayCellAnnotation) {
+        this.drawArrayCell(cellStructure, row, rowData, rowIndex);
+      } else {
+        this.drawCell(cellStructure, row, rowData, rowIndex);
+      }
     });
   }
 
@@ -127,18 +127,104 @@ public class ExcelGenerator {
     if (rowStructure.isDataRowAndHideHeader()) {
       currentRowNum.decrementAndGet();
     } else {
-      this.drawDataHeaderRow(annotation, currentRowNum.get(), sheet);
+      this.drawDataHeaderRow(rowStructure, currentRowNum.get(), sheet);
     }
 
     // draw cachedDataRowStyle
     Map<String, CellStyle> cachedDataRowStyle = this.createCachedDataRowStyle(rowStructure);
-    Collection<?> items = rowStructure.findRowDataCollection(this.excelDto);
-    if (items == null) {
+    Collection<Object> rowDataList = rowStructure.findRowDataCollection(this.excelDto);
+    if (rowDataList.isEmpty()) {
       return;
     }
-    items.forEach(item -> {
-      this.drawDataRow(rowStructure, currentRowNum.incrementAndGet(), item, cachedDataRowStyle,
-          sheet);
+    rowDataList.forEach(rowData ->
+        this.drawDataRow(rowStructure, currentRowNum.incrementAndGet(), rowData, cachedDataRowStyle,
+            sheet));
+  }
+
+  private void drawDataRow(
+      RowStructure rowStructure, int rowIndex, Object rowData,
+      Map<String, CellStyle> cachedDataRowStyle, Sheet sheet) {
+
+    DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
+
+    Row row = sheet.createRow(rowIndex);
+    if (annotation.isUseDataHeightInPoints()) {
+      row.setHeightInPoints(annotation.getDataHeightInPoints());
+    }
+
+    List<CellStructure> cells = rowStructure.getCells();
+    cells.forEach(cellStructure -> {
+      if (cellStructure.getAnnotation() instanceof ArrayCellAnnotation) {
+        this.drawArrayCell(cellStructure, row, rowData, rowIndex, cachedDataRowStyle);
+      } else {
+        this.drawCell(cellStructure, row, rowData, rowIndex, cachedDataRowStyle);
+      }
+    });
+
+  }
+
+  private void drawDataHeaderRow(RowStructure rowStructure, int rowNum, Sheet sheet) {
+    Row row = sheet.createRow(rowNum);
+    DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
+    if (annotation.isUseHeaderHeightInPoints()) {
+      row.setHeightInPoints(annotation.getHeaderHeightInPoints());
+    }
+    ArrayList<AbstractHeaderAnnotation> list = new ArrayList<>();
+    list.addAll(annotation.getArrayHeaders());
+    list.addAll(annotation.getHeaders());
+    list.forEach(abstractHeaderAnnotation -> {
+      CellStyle cellStyle = this.createCellStyle(abstractHeaderAnnotation.getStyle());
+
+      // 어레이셀 헤더 - 어레이셀과 매핑되며, 어레이셀의 크기만큼 헤더를 생성한다.
+      if (abstractHeaderAnnotation instanceof ArrayHeaderAnnotation) {
+        ArrayHeaderAnnotation arrayHeaderAnnotation = (ArrayHeaderAnnotation) abstractHeaderAnnotation;
+        CellStructure cellStructure = rowStructure
+            .findCellByFieldName(arrayHeaderAnnotation.getMapping());
+        if (!cellStructure.isArrayCell()) {
+          throw new ExcelGenerateException(
+              String.format("array header should mapping array cell, %s",
+                  arrayHeaderAnnotation.getMapping()));
+        }
+        int column = cellStructure.getAnnotation().getColumn();
+        int size = cellStructure.getAnnotation().getColumnSize();
+        int cols = cellStructure.getAnnotation().getCols();
+        IntStream.range(0, size).forEach(index -> {
+          int currentColumn = column + (index * cols);
+          Cell cell = row.createCell(currentColumn, org.apache.poi.ss.usermodel.CellType.STRING);
+          cell.setCellStyle(cellStyle);
+          this.mergeCell(cell, currentColumn, cols);
+
+          String name;
+          if (arrayHeaderAnnotation.getArrayHeaderNameExpression() != null) {
+            name = arrayHeaderAnnotation.getArrayHeaderNameExpression().get(index);
+          } else {
+            name = arrayHeaderAnnotation.getSimpleNameExpression()
+                .replaceAll("\\{\\{index}}", Integer.toString(index));
+          }
+          this.bindCellValue(cell, CellType.STRING, name);
+        });
+      }
+      // 일반 헤더 - 복수의 셀과 매핑될 수 있으며, 복수의 셀이 차지하는 영역만큼 병합되어 표현된다.
+      else {
+        HeaderAnnotation headerAnnotation = (HeaderAnnotation) abstractHeaderAnnotation;
+        List<CellStructure> mappingCellStructures = headerAnnotation.getMappings().stream()
+            .map(rowStructure::findCellByFieldName)
+            .sorted(
+                Comparator.comparing(cellStructure -> cellStructure.getAnnotation().getColumn()))
+            .collect(Collectors.toList());
+        if (mappingCellStructures.isEmpty()) {
+          return;
+        }
+        int column = mappingCellStructures.get(0).getAnnotation().getColumn();
+        AbstractCellAnnotation lastMappingAnnotation = mappingCellStructures
+            .get(mappingCellStructures.size() - 1).getAnnotation();
+        int cols = lastMappingAnnotation.getColumn() +
+            (lastMappingAnnotation.getColumnSize() * lastMappingAnnotation.getCols()) - column;
+        Cell cell = row.createCell(column, org.apache.poi.ss.usermodel.CellType.STRING);
+        cell.setCellStyle(cellStyle);
+        this.mergeCell(cell, column, cols);
+        this.bindCellValue(cell, CellType.STRING, headerAnnotation.getName());
+      }
     });
   }
 
@@ -146,10 +232,10 @@ public class ExcelGenerator {
     List<CellStructure> cells = rowStructure.getCells();
     Map<String, CellStyle> cachedDataRowStyle = new HashMap<>();
     cells.forEach(cellStructure -> {
-      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
+      AbstractCellAnnotation annotation = cellStructure.getAnnotation();
       cachedDataRowStyle.put(
           cellStructure.getFieldName(),
-          this.createCellStyle(cellAnnotation.getStyle()));
+          this.createCellStyle(annotation.getStyle()));
     });
     return cachedDataRowStyle;
   }
@@ -162,53 +248,68 @@ public class ExcelGenerator {
     return Optional.of(cachedDataRowStyle.get(fieldName));
   }
 
-  private void drawDataRow(
-      RowStructure rowStructure, int rowNum, Object item, Map<String, CellStyle> cachedDataRowStyle,
-      Sheet sheet) {
-
-    DataRowsAnnotation annotation = (DataRowsAnnotation) rowStructure.getAnnotation();
-
-    Row row = sheet.createRow(rowNum);
-    if (annotation.isUseDataHeightInPoints()) {
-      row.setHeightInPoints(annotation.getDataHeightInPoints());
-    }
-
-    List<CellStructure> cells = rowStructure.getCells();
-    cells.forEach(cellStructure -> {
-      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      Cell cell = row.createCell(
-          cellAnnotation.getColumn(), cellAnnotation.getCellType().toExcelCellType()
-      );
-      this.getCachedDataRowStyle(cachedDataRowStyle, cellStructure.getFieldName())
-          .ifPresent(cell::setCellStyle);
-      //cols 적용
-      this.mergeCell(cell, cellAnnotation.getColumn(), cellAnnotation.getCols());
-      //값 바인딩
-      Object cellValue;
-      try {
-        cellValue = cellStructure.getField().get(item);
-      } catch (IllegalAccessException e) {
-        throw new ExcelGenerateException(
-            String.format("can not find field from data item, %s", cellStructure.getFieldName()),
-            e);
-      }
-      this.bindCellValue(cell, cellAnnotation.getCellType(), cellValue, cellStructure, rowNum);
-    });
+  private void drawCell(CellStructure cellStructure, Row row, Object rowData, int rowIndex) {
+    this.drawCell(cellStructure, row, rowData, rowIndex, null);
   }
 
-  private void drawDataHeaderRow(DataRowsAnnotation annotation, int rowNum, Sheet sheet) {
-    Row row = sheet.createRow(rowNum);
-    if (annotation.isUseHeaderHeightInPoints()) {
-      row.setHeightInPoints(annotation.getHeaderHeightInPoints());
+  private void drawCell(CellStructure cellStructure, Row row, Object rowData, int rowIndex,
+      Map<String, CellStyle> cachedDataRowStyle) {
+    CellAnnotation annotation = (CellAnnotation) cellStructure.getAnnotation();
+    Cell cell = row.createCell(
+        annotation.getColumn(), annotation.getCellType().toExcelCellType()
+    );
+
+    //스타일 적용
+    if (cellStructure.getRowStructure().isDataRow()) {
+      this.getCachedDataRowStyle(cachedDataRowStyle, cellStructure.getFieldName())
+          .ifPresent(cell::setCellStyle);
+    } else {
+      cell.setCellStyle(this.createCellStyle(annotation.getStyle()));
     }
-    annotation.getHeaders().forEach(headerAnnotation -> {
-      CellStyle cellStyle = this.createCellStyle(headerAnnotation.getStyle());
+
+    //cols 적용
+    this.mergeCell(cell, annotation.getColumn(), annotation.getCols());
+    //값 바인딩
+    Object cellValue = cellStructure.findCellValue(rowData);
+    this.bindCellValue(cell, annotation.getCellType(), cellValue, cellStructure, rowIndex);
+  }
+
+  private void drawArrayCell(CellStructure cellStructure, Row row, Object rowData, int rowIndex) {
+    this.drawArrayCell(cellStructure, row, rowData, rowIndex);
+  }
+
+  private void drawArrayCell(CellStructure cellStructure, Row row, Object rowData, int rowIndex,
+      Map<String, CellStyle> cachedDataRowStyle) {
+    ArrayCellAnnotation annotation = (ArrayCellAnnotation) cellStructure.getAnnotation();
+    AtomicInteger currentColumn = new AtomicInteger(annotation.getColumn());
+
+    //스타일 적용
+    CellStyle cellStyle;
+    //스타일 적용
+    if (cellStructure.getRowStructure().isDataRow()) {
+      cellStyle = this.getCachedDataRowStyle(cachedDataRowStyle, cellStructure.getFieldName())
+          .orElse(this.createCellStyle(annotation.getStyle()));
+    } else {
+      cellStyle = this.createCellStyle(annotation.getStyle());
+    }
+
+    Collection<?> cellDataList = cellStructure.findCellDataCollection(rowData)
+        .stream()
+        .limit(annotation.getSize())
+        .collect(Collectors.toList());
+    if (cellDataList.isEmpty()) {
+      return;
+    }
+    cellDataList.forEach(cellData -> {
       Cell cell = row.createCell(
-          headerAnnotation.getColumn(), org.apache.poi.ss.usermodel.CellType.STRING
-      );
+          currentColumn.get(), annotation.getCellType().toExcelCellType());
       cell.setCellStyle(cellStyle);
-      this.mergeCell(cell, headerAnnotation.getColumn(), headerAnnotation.getCols());
-      this.bindCellValue(cell, CellType.STRING, headerAnnotation.getName());
+      //cols 적용
+      this.mergeCell(cell, currentColumn.get(), annotation.getCols());
+      //값 바인딩
+      this.bindCellValue(cell, annotation.getCellType(), cellData, cellStructure, rowIndex);
+      //컬럼 증가
+      currentColumn.set(currentColumn.get() + annotation.getCols());
     });
   }
 
@@ -240,26 +341,6 @@ public class ExcelGenerator {
     CellStyle cellStyle = this.workbook.createCellStyle();
     style.applyStyle(cellStyle, font, this.workbook);
     return cellStyle;
-  }
-
-  private Object findCellValue(CellStructure cellStructure) {
-    Field sheetField = cellStructure.getSheetField();
-    try {
-      Object sheetObj = sheetField.get(this.excelDto);
-      if (sheetObj == null) {
-        return null;
-      }
-      Field rowField = cellStructure.getRowField();
-      Object rowObj = rowField.get(sheetObj);
-      if (rowObj == null) {
-        return null;
-      }
-      Field cellField = cellStructure.getField();
-      return cellField.get(rowObj);
-    } catch (IllegalAccessException e) {
-      throw new ExcelGenerateException(
-          String.format("can not find cell class, %s", cellStructure.getFieldName()), e);
-    }
   }
 
   private void bindCellValue(Cell cell, CellType cellType, Object value) {

@@ -1,4 +1,4 @@
-package com.mz.poi.mapper.template;
+package com.mz.poi.mapper.example.other;
 
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.CellStyle;
@@ -50,8 +50,8 @@ public class ExtendsTemplate {
         row = 1,
         match = Match.REQUIRED,
         headers = {
-            @Header(name = "a", column = 0),
-            @Header(name = "b", column = 1)
+            @Header(name = "a", mappings = {"firstValue"}),
+            @Header(name = "b", mappings = {"secondValue"})
         }
     )
     private List<FirstTableRow> firstTable;
@@ -72,7 +72,7 @@ public class ExtendsTemplate {
         rowAfter = "firstTable",
         match = Match.REQUIRED,
         headers = {
-            @Header(name = "c", column = 0)
+            @Header(name = "c", mappings = {"firstValue"})
         },
         hideHeader = true
     )

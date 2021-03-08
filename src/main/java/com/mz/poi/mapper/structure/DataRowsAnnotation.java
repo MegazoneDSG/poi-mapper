@@ -25,6 +25,7 @@ public class DataRowsAnnotation extends AbstractRowAnnotation {
   private boolean hideHeader;
 
   private List<HeaderAnnotation> headers = new ArrayList<>();
+  private List<ArrayHeaderAnnotation> arrayHeaders = new ArrayList<>();
 
   public DataRowsAnnotation(DataRows row, CellStyleAnnotation sheetStyle) {
     this.setRow(row.row());
@@ -48,6 +49,10 @@ public class DataRowsAnnotation extends AbstractRowAnnotation {
     Arrays.asList(row.headers())
         .forEach(header -> this.headers.add(
             new HeaderAnnotation(header, headerStyle)
+        ));
+    Arrays.asList(row.arrayHeaders())
+        .forEach(header -> this.arrayHeaders.add(
+            new ArrayHeaderAnnotation(header, headerStyle)
         ));
   }
 }

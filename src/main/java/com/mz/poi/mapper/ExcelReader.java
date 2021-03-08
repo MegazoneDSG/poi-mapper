@@ -6,6 +6,7 @@ import com.mz.poi.mapper.exception.ReadExceptionAddress;
 import com.mz.poi.mapper.helper.DateFormatHelper;
 import com.mz.poi.mapper.helper.FormulaHelper;
 import com.mz.poi.mapper.helper.InheritedFieldHelper;
+import com.mz.poi.mapper.structure.ArrayCellAnnotation;
 import com.mz.poi.mapper.structure.CellAnnotation;
 import com.mz.poi.mapper.structure.CellStructure;
 import com.mz.poi.mapper.structure.CellType;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import lombok.Getter;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -110,11 +112,12 @@ public class ExcelReader {
     }
     List<CellStructure> cells = rowStructure.getCells();
     cells.forEach(cellStructure -> {
-      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      Cell cell = row.getCell(cellAnnotation.getColumn());
-      this.bindCellValue(cell, cellStructure, rowObj);
+      if (cellStructure.getAnnotation() instanceof ArrayCellAnnotation) {
+        this.readArrayCells(cellStructure, row, rowObj);
+      } else {
+        this.readCell(cellStructure, row, rowObj);
+      }
     });
-
     rowStructure.setRead(true);
   }
 
@@ -182,17 +185,28 @@ public class ExcelReader {
 
   private boolean isNotBlankMatch(RowStructure rowStructure, Row row, Object rowObj) {
     boolean isMatch = rowStructure.getCells().stream()
-        .anyMatch(cellStructure -> {
+        .flatMapToInt(cellStructure -> {
           int column = cellStructure.getAnnotation().getColumn();
+          int columnSize = cellStructure.getAnnotation().getColumnSize();
+          int cols = cellStructure.getAnnotation().getCols();
+          if (columnSize == 0) {
+            return IntStream.empty();
+          } else {
+            return IntStream.range(column, column + (columnSize * cols));
+          }
+        })
+        .anyMatch(column -> {
           Cell cell = row.getCell(column);
           return !(cell == null
               || cell.getCellType() == org.apache.poi.ss.usermodel.CellType.BLANK);
         });
     List<CellStructure> cells = rowStructure.getCells();
     cells.forEach(cellStructure -> {
-      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      Cell cell = row.getCell(cellAnnotation.getColumn());
-      this.bindCellValue(cell, cellStructure, rowObj);
+      if (cellStructure.getAnnotation() instanceof ArrayCellAnnotation) {
+        this.readArrayCells(cellStructure, row, rowObj);
+      } else {
+        this.readCell(cellStructure, row, rowObj);
+      }
     });
     return isMatch;
   }
@@ -200,10 +214,13 @@ public class ExcelReader {
   private boolean isRequiredMatch(RowStructure rowStructure, Row row, Object rowObj) {
     AtomicBoolean isMatch = new AtomicBoolean(true);
     rowStructure.getCells().forEach(cellStructure -> {
-      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      Cell cell = row.getCell(cellAnnotation.getColumn());
-      boolean isBind = this.bindCellValue(cell, cellStructure, rowObj);
-      if (cellAnnotation.isRequired() && !isBind) {
+      boolean isBind;
+      if (cellStructure.getAnnotation() instanceof ArrayCellAnnotation) {
+        isBind = this.readArrayCells(cellStructure, row, rowObj);
+      } else {
+        isBind = this.readCell(cellStructure, row, rowObj);
+      }
+      if (cellStructure.getAnnotation().isRequired() && !isBind) {
         isMatch.set(false);
       }
     });
@@ -213,9 +230,55 @@ public class ExcelReader {
   private boolean isAllMatch(RowStructure rowStructure, Row row, Object rowObj) {
     AtomicBoolean isMatch = new AtomicBoolean(true);
     rowStructure.getCells().forEach(cellStructure -> {
-      CellAnnotation cellAnnotation = cellStructure.getAnnotation();
-      Cell cell = row.getCell(cellAnnotation.getColumn());
-      boolean isBind = this.bindCellValue(cell, cellStructure, rowObj);
+      boolean isBind;
+      if (cellStructure.getAnnotation() instanceof ArrayCellAnnotation) {
+        isBind = this.readArrayCells(cellStructure, row, rowObj);
+      } else {
+        isBind = this.readCell(cellStructure, row, rowObj);
+      }
+      if (!isBind) {
+        isMatch.set(false);
+      }
+    });
+    return isMatch.get();
+  }
+
+  private boolean readCell(CellStructure cellStructure, Row row, Object rowObj) {
+    CellAnnotation cellAnnotation = (CellAnnotation) cellStructure.getAnnotation();
+    Cell cell = row.getCell(cellAnnotation.getColumn());
+    return this.bindCellValue(cell, cellStructure, rowObj);
+  }
+
+  private boolean readArrayCells(CellStructure cellStructure, Row row, Object rowObj) {
+    List collection = new ArrayList<>();
+    Class<?> cellClass = null;
+    Field collectionField = null;
+    try {
+      collectionField = InheritedFieldHelper
+          .getDeclaredField(rowObj.getClass(), cellStructure.getFieldName());
+
+      collectionField.setAccessible(true);
+      collectionField.set(rowObj, collection);
+
+      ParameterizedType genericType =
+          (ParameterizedType) cellStructure.getField().getGenericType();
+      cellClass = (Class<?>) genericType.getActualTypeArguments()[0];
+
+    } catch (IllegalAccessException | NoSuchFieldException e) {
+      throw new ExcelReadException("Invalid array cell class", e,
+          new ReadExceptionAddress(
+              cellStructure.getRowStructure().getSheetStructure().getAnnotation().getIndex(),
+              cellStructure.getRowStructure().getStartRowNum())
+      );
+    }
+
+    AtomicBoolean isMatch = new AtomicBoolean(true);
+    ArrayCellAnnotation arrayCellAnnotation = (ArrayCellAnnotation) cellStructure.getAnnotation();
+    Class<?> finalCellClass = cellClass;
+    IntStream.range(0, arrayCellAnnotation.getSize()).forEach(index -> {
+      Cell cell = row.getCell(
+          arrayCellAnnotation.getColumn() + (arrayCellAnnotation.getCols() * index));
+      boolean isBind = this.bindArrayCellValue(cell, cellStructure, collection, finalCellClass);
       if (!isBind) {
         isMatch.set(false);
       }
@@ -330,5 +393,101 @@ public class ExcelReader {
           )
       );
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  private boolean bindArrayCellValue(Cell cell, CellStructure cellStructure,
+      List collection, Class<?> cellClass) {
+    if (!Optional.ofNullable(cell).isPresent() || cellStructure.getAnnotation().isIgnoreParse()) {
+      return false;
+    }
+    AtomicBoolean isBind = new AtomicBoolean(false);
+    CellType expectedCellType = cellStructure.getAnnotation().getCellType();
+    org.apache.poi.ss.usermodel.CellType expectedExcelCellType = expectedCellType
+        .toExcelCellType();
+    switch (expectedCellType) {
+      case DATE:
+        boolean isCellDateFormatted;
+        try {
+          isCellDateFormatted = DateUtil.isCellDateFormatted(cell);
+        } catch (IllegalStateException ex) {
+          break;
+        }
+        if (isCellDateFormatted) {
+          Date cellValue = cell.getDateCellValue();
+          if (LocalDateTime.class.isAssignableFrom(cellClass)) {
+            collection.add(DateFormatHelper.getLocalDateTime(cellValue,
+                this.structure.getAnnotation().getDateFormatZoneId()));
+          } else if (LocalDate.class.isAssignableFrom(cellClass)) {
+            collection.add(DateFormatHelper.getLocalDate(cellValue,
+                this.structure.getAnnotation().getDateFormatZoneId()));
+          } else {
+            throw new ExcelReadException(
+                String.format("not supported date type %s", cellClass.getName()),
+                new ReadExceptionAddress(
+                    this.workbook.getSheetIndex(cell.getSheet().getSheetName()),
+                    cell.getRowIndex(),
+                    cell.getColumnIndex()
+                )
+            );
+          }
+          isBind.set(true);
+        }
+        break;
+      case STRING:
+        if (cell.getCellType().equals(expectedExcelCellType)) {
+          collection.add(cell.getStringCellValue());
+          isBind.set(true);
+        }
+        break;
+      case NUMERIC:
+        if (cell.getCellType().equals(expectedExcelCellType)) {
+          double cellValue = cell.getNumericCellValue();
+
+          if (Double.class.isAssignableFrom(cellClass) ||
+              double.class.isAssignableFrom(cellClass)) {
+            collection.add(cellValue);
+          } else if (Float.class.isAssignableFrom(cellClass) ||
+              float.class.isAssignableFrom(cellClass)) {
+            collection.add((float) cellValue);
+          } else if (Long.class.isAssignableFrom(cellClass) ||
+              long.class.isAssignableFrom(cellClass)) {
+            collection.add(Double.valueOf(cellValue).longValue());
+          } else if (Short.class.isAssignableFrom(cellClass) ||
+              short.class.isAssignableFrom(cellClass)) {
+            collection.add(Double.valueOf(cellValue).shortValue());
+          } else if (BigDecimal.class.isAssignableFrom(cellClass)) {
+            collection.add(BigDecimal.valueOf(cellValue));
+          } else if (BigInteger.class.isAssignableFrom(cellClass)) {
+            collection.add(BigInteger.valueOf(Double.valueOf(cellValue).longValue()));
+          } else if (Integer.class.isAssignableFrom(cellClass) ||
+              int.class.isAssignableFrom(cellClass)) {
+            collection.add(Double.valueOf(cellValue).intValue());
+          } else {
+            throw new ExcelReadException(
+                String.format("not supported number type %s", cellClass.getName()),
+                new ReadExceptionAddress(
+                    this.workbook.getSheetIndex(cell.getSheet().getSheetName()),
+                    cell.getRowIndex(),
+                    cell.getColumnIndex()
+                )
+            );
+          }
+          isBind.set(true);
+        }
+        break;
+      case BOOLEAN:
+        if (cell.getCellType().equals(expectedExcelCellType)) {
+          collection.add(cell.getBooleanCellValue());
+          isBind.set(true);
+        }
+        break;
+      default:
+        break;
+    }
+    if (!isBind.get()) {
+      collection.add(null);
+    }
+    return isBind.get();
   }
 }

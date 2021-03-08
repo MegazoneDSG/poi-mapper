@@ -1,4 +1,4 @@
-package com.mz.poi.mapper.sample;
+package com.mz.poi.mapper.example.basic;
 
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.CellStyle;
@@ -30,5 +30,5 @@ public class SummaryRow {
       ),
       ignoreParse = true
   )
-  private String formula = "SUM({{itemTable.at(0).total}}:{{itemTable.last.total}})";
+  private String formula = "SUM({{itemTable[0].total}}:{{itemTable[last].total}})";
 }

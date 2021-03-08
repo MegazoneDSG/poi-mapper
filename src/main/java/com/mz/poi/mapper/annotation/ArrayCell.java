@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
-public @interface Cell {
+public @interface ArrayCell {
 
   int column() default 0;
 
@@ -25,4 +25,6 @@ public @interface Cell {
   boolean required() default false;
 
   CellStyle style() default @CellStyle;
+
+  int size() default 0;
 }

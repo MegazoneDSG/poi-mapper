@@ -3,10 +3,10 @@ package com.mz.poi.mapper;
 
 import com.mz.poi.mapper.structure.CellStructure;
 import com.mz.poi.mapper.structure.ExcelStructure;
-import com.mz.poi.mapper.template.ExtendsTemplate;
-import com.mz.poi.mapper.template.ExtendsTemplate.FirstTableRow;
-import com.mz.poi.mapper.template.ExtendsTemplate.SecondTableRow;
-import com.mz.poi.mapper.template.ExtendsTemplate.TestSheet;
+import com.mz.poi.mapper.example.other.ExtendsTemplate;
+import com.mz.poi.mapper.example.other.ExtendsTemplate.FirstTableRow;
+import com.mz.poi.mapper.example.other.ExtendsTemplate.SecondTableRow;
+import com.mz.poi.mapper.example.other.ExtendsTemplate.TestSheet;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

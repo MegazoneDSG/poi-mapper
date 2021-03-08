@@ -7,11 +7,11 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
-public @interface Header {
+public @interface ArrayHeader {
 
   CellStyle style() default @CellStyle;
 
-  String[] mappings() default {};
+  String mapping() default "";
 
-  String name();
+  String simpleNameExpression() default "{{index}}";
 }

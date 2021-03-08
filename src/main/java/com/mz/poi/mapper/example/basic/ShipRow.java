@@ -1,4 +1,4 @@
-package com.mz.poi.mapper.sample;
+package com.mz.poi.mapper.example.basic;
 
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.CellStyle;

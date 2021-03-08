@@ -1,10 +1,11 @@
-package com.mz.poi.mapper.sample;
+package com.mz.poi.mapper.example.arraycell;
 
 import com.mz.poi.mapper.annotation.CellStyle;
 import com.mz.poi.mapper.annotation.ColumnWidth;
 import com.mz.poi.mapper.annotation.Excel;
 import com.mz.poi.mapper.annotation.Font;
 import com.mz.poi.mapper.annotation.Sheet;
+import com.mz.poi.mapper.example.basic.OrderSheet;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +20,7 @@ import lombok.Setter;
     ),
     dateFormatZoneId = "Asia/Seoul"
 )
-public class PurchaseOrderTemplate {
+public class ArrayCellTemplate {
 
   @Sheet(
       name = "Order",
@@ -30,10 +31,10 @@ public class PurchaseOrderTemplate {
       defaultColumnWidth = 20,
       defaultRowHeightInPoints = 20
   )
-  private OrderSheet sheet = new OrderSheet();
+  private ArrayCellSheet sheet = new ArrayCellSheet();
 
   @Builder
-  public PurchaseOrderTemplate(OrderSheet sheet) {
+  public ArrayCellTemplate(ArrayCellSheet sheet) {
     this.sheet = sheet;
   }
 }
