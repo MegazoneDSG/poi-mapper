@@ -315,6 +315,7 @@ Row recognition condition when converting Excel to model.
 |------------|--------|
 | ALL | All column values must exist to be recognized as DataRow.  |
 | REQUIRED | If only the value of the column annotated with [@Cell](#Cell).required exists, it is recognized as DataRow.  |
+| STOP_ON_BLANK | It is recognized as a data row until it encounters a blank row.  |
 
 ## @Cell
 
