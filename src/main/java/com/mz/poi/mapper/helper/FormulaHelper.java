@@ -35,66 +35,14 @@ public class FormulaHelper {
     cell.setCellFormula(formula);
   }
 
-//  private Optional<String> getRowCellAddress(CellStructure cellStructure, String addressStr) {
-//    String[] split = addressStr.split("\\.");
-//    String rowFieldName = split[0];
-//    String cellFieldName = split[1];
-//    RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
-//        .findRowByFieldName(rowFieldName);
-//    return rowStructure.getCells().stream()
-//        .filter(_cellStructure ->
-//            _cellStructure.getFieldName().equals(cellFieldName))
-//        .map(_cellStructure ->
-//            new CellAddress(
-//                rowStructure.getStartRowNum(),
-//                _cellStructure.getAnnotation().getColumn()
-//            ).formatAsString())
-//        .findFirst();
-//  }
-//
-//  private Optional<String> getIndexedDataRowCellAddress(CellStructure cellStructure,
-//      String addressStr) {
-//    String[] split = addressStr.split("\\.");
-//    String rowFieldName = split[0];
-//    String rowNumRex = split[1];
-//    String cellFieldName = split[2];
-//
-//    RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
-//        .findRowByFieldName(rowFieldName);
-//    int rowNum = 0;
-//    if ("last".equals(rowNumRex)) {
-//      rowNum = rowStructure.getEndRowNum();
-//    } else {
-//      String atRex = "at\\(([0-9]+?)\\)";
-//      Matcher m = Pattern.compile(atRex).matcher(rowNumRex);
-//      boolean matched = false;
-//      while (m.find()) {
-//        matched = true;
-//        int dataStartNum = rowStructure.getStartRowNum() + 1; // 헤더를 제외하고 시작해야 하기 때문에 1 추가한다.
-//        int at = Integer.parseInt(m.group(1));
-//        rowNum = dataStartNum + at;
-//      }
-//      if (!matched) {
-//        throw new ExcelGenerateException(String.format("Invalid formula pattern %s", addressStr));
-//      }
-//    }
-//
-//    int finalRowNum = rowNum;
-//    return rowStructure.getCells().stream()
-//        .filter(_cellStructure ->
-//            _cellStructure.getFieldName().equals(cellFieldName))
-//        .map(_cellStructure -> new CellAddress(
-//            finalRowNum, _cellStructure.getAnnotation().getColumn()
-//        ).formatAsString())
-//        .findFirst();
-//  }
-
   private Optional<String> getCellAddress(CellStructure cellStructure, String addressStr) {
     String[] split = addressStr.split("\\.");
     String rowNumRex = getIndexRex(split[0]);
-    String rowFieldName = rowNumRex == null ? split[0] : split[0].replace("[" + rowNumRex + "]", "");
+    String rowFieldName =
+        rowNumRex == null ? split[0] : split[0].replace("[" + rowNumRex + "]", "");
     String cellNumRex = getIndexRex(split[1]);
-    String cellFieldName = cellNumRex == null ? split[1] : split[1].replace("[" + cellNumRex + "]", "");
+    String cellFieldName =
+        cellNumRex == null ? split[1] : split[1].replace("[" + cellNumRex + "]", "");
 
     RowStructure rowStructure = cellStructure.getRowStructure().getSheetStructure()
         .findRowByFieldName(rowFieldName);
@@ -133,7 +81,8 @@ public class FormulaHelper {
       String addressStr, int rowIndex) {
     String[] split = addressStr.split("\\.");
     String cellNumRex = getIndexRex(split[1]);
-    String cellFieldName = cellNumRex == null ? split[1] : split[1].replace("[" + cellNumRex + "]", "");
+    String cellFieldName =
+        cellNumRex == null ? split[1] : split[1].replace("[" + cellNumRex + "]", "");
 
     RowStructure rowStructure = cellStructure.getRowStructure();
     CellStructure cellByFieldName = rowStructure.findCellByFieldName(cellFieldName);
