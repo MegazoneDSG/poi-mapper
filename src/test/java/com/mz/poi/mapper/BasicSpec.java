@@ -21,7 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
 
-public class BasicSpec {
+public class BasicSpec extends MapperTestSupport {
 
   private PurchaseOrderTemplate createModel() {
     return PurchaseOrderTemplate
@@ -83,7 +83,7 @@ public class BasicSpec {
   public void model_to_excel() throws IOException {
     PurchaseOrderTemplate model = this.createModel();
     Workbook excel = ExcelMapper.toExcel(model);
-    File file = new File("test.xlsx");
+    File file = new File(testDir + "/test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
     fos.close();
@@ -91,7 +91,7 @@ public class BasicSpec {
 
   @Test
   public void excel_to_model() throws IOException {
-    FileInputStream fis = new FileInputStream("test.xlsx");
+    FileInputStream fis = new FileInputStream(testDir + "/test.xlsx");
     XSSFWorkbook excel = new XSSFWorkbook(fis);
     PurchaseOrderTemplate fromModel = ExcelMapper.fromExcel(excel, PurchaseOrderTemplate.class);
     assert fromModel.getSheet().getItemTable().size() == 3;

@@ -6,6 +6,7 @@ import com.mz.poi.mapper.example.arraycell.ArrayCellTemplate;
 import com.mz.poi.mapper.example.arraycell.ItemRow;
 import com.mz.poi.mapper.example.arraycell.SummaryRow;
 import com.mz.poi.mapper.expression.ArrayHeaderNameExpression;
+import com.mz.poi.mapper.structure.ArrayCellAnnotation;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
 import com.mz.poi.mapper.structure.ExcelStructure;
 import java.io.File;
@@ -23,7 +24,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
-public class ArrayCellTemplateSpec {
+public class ArrayCellTemplateSpec extends MapperTestSupport {
 
   private ArrayCellTemplate createModel() {
     ArrayList<ItemRow> itemRows = new ArrayList<>();
@@ -62,7 +63,7 @@ public class ArrayCellTemplateSpec {
   public void model_to_excel() throws IOException {
     ArrayCellTemplate model = this.createModel();
     Workbook excel = ExcelMapper.toExcel(model);
-    File file = new File("array_cell_test.xlsx");
+    File file = new File(testDir + "/array_cell_test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
     fos.close();
@@ -88,7 +89,26 @@ public class ArrayCellTemplateSpec {
         );
     ArrayCellTemplate model = this.createModel();
     Workbook excel = ExcelMapper.toExcel(model, structure);
-    File file = new File("dynamic_array_header_test.xlsx");
+    File file = new File(testDir + "/dynamic_array_header_test.xlsx");
+    FileOutputStream fos = new FileOutputStream(file);
+    excel.write(fos);
+    fos.close();
+  }
+
+  @Test
+  public void model_to_excel_with_dynamic_array_size() throws IOException {
+    ExcelStructure structure = new ExcelStructure().build(ArrayCellTemplate.class);
+    ArrayCellAnnotation arrayCellAnnotation =
+        (ArrayCellAnnotation) structure
+            .getSheet("sheet")
+            .getRow("itemTable")
+            .getCell("qty")
+            .getAnnotation();
+    arrayCellAnnotation.setSize(8);
+
+    ArrayCellTemplate model = this.createModel();
+    Workbook excel = ExcelMapper.toExcel(model, structure);
+    File file = new File(testDir + "/dynamic_array_size_test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
     fos.close();
@@ -96,7 +116,7 @@ public class ArrayCellTemplateSpec {
 
   @Test
   public void excel_to_model() throws IOException {
-    FileInputStream fis = new FileInputStream("array_cell_test.xlsx");
+    FileInputStream fis = new FileInputStream(testDir + "/array_cell_test.xlsx");
     XSSFWorkbook excel = new XSSFWorkbook(fis);
     ArrayCellTemplate fromModel = ExcelMapper.fromExcel(excel, ArrayCellTemplate.class);
     assert fromModel.getSheet().getItemTable().size() == 5;

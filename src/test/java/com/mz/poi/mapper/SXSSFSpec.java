@@ -21,7 +21,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.Test;
 
 
-public class SXSSFSpec {
+public class SXSSFSpec extends MapperTestSupport{
 
   private PurchaseOrderTemplate createModel() {
 
@@ -63,7 +63,7 @@ public class SXSSFSpec {
   public void model_to_stream_excel() throws IOException {
     PurchaseOrderTemplate model = this.createModel();
     Workbook excel = ExcelMapper.toExcel(model, new SXSSFWorkbook(50));
-    File file = new File("sxssf_test.xlsx");
+    File file = new File(testDir + "/sxssf_test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
     fos.close();
@@ -71,7 +71,7 @@ public class SXSSFSpec {
 
   @Test
   public void excel_to_model() throws IOException {
-    FileInputStream fis = new FileInputStream("sxssf_test.xlsx");
+    FileInputStream fis = new FileInputStream(testDir + "/sxssf_test.xlsx");
     XSSFWorkbook excel = new XSSFWorkbook(fis);
     PurchaseOrderTemplate fromModel = ExcelMapper.fromExcel(excel, PurchaseOrderTemplate.class);
     assert fromModel.getSheet().getItemTable().size() == 200;

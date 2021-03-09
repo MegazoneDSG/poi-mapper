@@ -300,6 +300,11 @@ public class ExcelGenerator {
     if (cellDataList.isEmpty()) {
       return;
     }
+    if (cellDataList.size() < annotation.getSize()) {
+      IntStream.range(0, annotation.getSize() - cellDataList.size())
+          .forEach(i -> cellDataList.add(null));
+    }
+
     cellDataList.forEach(cellData -> {
       Cell cell = row.createCell(
           currentColumn.get(), annotation.getCellType().toExcelCellType());

@@ -17,7 +17,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.Test;
 
 
-public class ExtendsTemplateSpec {
+public class ExtendsTemplateSpec extends MapperTestSupport{
 
   private ExtendsTemplate createModel() {
     return ExtendsTemplate
@@ -48,7 +48,7 @@ public class ExtendsTemplateSpec {
   public void model_to_excel() throws IOException {
     ExtendsTemplate model = this.createModel();
     Workbook excel = ExcelMapper.toExcel(model);
-    File file = new File("extends_test.xlsx");
+    File file = new File(testDir + "/extends_test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
     fos.close();
@@ -74,7 +74,7 @@ public class ExtendsTemplateSpec {
 
     ExtendsTemplate model = this.createModel();
     Workbook excel = ExcelMapper.toExcel(model, structure);
-    File file = new File("modify_cell_structure_column.xlsx");
+    File file = new File(testDir + "/modify_cell_structure_column.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
     fos.close();

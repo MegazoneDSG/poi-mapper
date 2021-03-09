@@ -13,7 +13,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.junit.Test;
 
 
-public class MatchTemplateSpec {
+public class MatchTemplateSpec extends MapperTestSupport{
 
   private MatchTemplate createModel() {
     return MatchTemplate
@@ -49,7 +49,7 @@ public class MatchTemplateSpec {
   public void model_to_excel() throws IOException {
     MatchTemplate model = this.createModel();
     Workbook excel = ExcelMapper.toExcel(model);
-    File file = new File("match_test.xlsx");
+    File file = new File(testDir + "/match_test.xlsx");
     FileOutputStream fos = new FileOutputStream(file);
     excel.write(fos);
     fos.close();
