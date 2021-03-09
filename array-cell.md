@@ -208,6 +208,36 @@ public class SummaryRow {
 }
 ```
 
+## Dynamic Resize ArrayCell
+
+### Output
+
+![](https://user-images.githubusercontent.com/13447690/110400791-a75c0f00-80bb-11eb-849d-e9791caf9f27.png)
+
+```java
+public class ArrayCellTemplate {
+
+  @Test
+  public void model_to_excel_with_dynamic_array_size() throws IOException {
+    ExcelStructure structure = new ExcelStructure().build(ArrayCellTemplate.class);
+    ArrayCellAnnotation arrayCellAnnotation =
+        (ArrayCellAnnotation) structure
+            .getSheet("sheet")
+            .getRow("itemTable")
+            .getCell("qty")
+            .getAnnotation();
+    arrayCellAnnotation.setSize(8);
+
+    ArrayCellTemplate model = this.createModel();
+    Workbook excel = ExcelMapper.toExcel(model, structure);
+    File file = new File(testDir + "/dynamic_array_size_test.xlsx");
+    FileOutputStream fos = new FileOutputStream(file);
+    excel.write(fos);
+    fos.close();
+  }
+}
+```  
+
 ## Custom Array Header Name
 
 ### Output
