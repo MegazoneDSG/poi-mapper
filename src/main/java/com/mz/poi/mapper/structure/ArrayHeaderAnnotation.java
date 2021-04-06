@@ -11,13 +11,13 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ArrayHeaderAnnotation extends AbstractHeaderAnnotation {
 
-  private String simpleNameExpression;
-  private String mapping;
-  private ArrayHeaderNameExpression arrayHeaderNameExpression;
+    private String simpleNameExpression;
+    private String mapping;
+    private ArrayHeaderNameExpression arrayHeaderNameExpression;
 
-  public ArrayHeaderAnnotation(ArrayHeader header, CellStyleAnnotation headerDefaultStyle) {
-    this.setStyle(new CellStyleAnnotation(header.style(), headerDefaultStyle));
-    this.mapping = header.mapping();
-    this.simpleNameExpression = header.simpleNameExpression();
-  }
+    public ArrayHeaderAnnotation(ArrayHeader header, CellStyleAnnotation headerDefaultStyle) {
+        this.setStyle(new CellStyleAnnotation(header.style(), headerDefaultStyle));
+        this.mapping = header.mapping();
+        this.simpleNameExpression = header.simpleNameExpression();
+    }
 }

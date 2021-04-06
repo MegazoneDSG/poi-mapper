@@ -1,18 +1,18 @@
 package com.mz.poi.mapper.annotation;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.BuiltinFormats;
-import org.apache.poi.ss.usermodel.DataFormat;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IgnoredErrorType;
 import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+@Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE})
 public @interface CellStyle {
@@ -25,11 +25,11 @@ public @interface CellStyle {
   Font[] font() default {};
 
   /**
-   * get data format. Built in formats are defined at {@link BuiltinFormats}.
+   * get data format. Built in formats are defined at {@link org.apache.poi.ss.usermodel.BuiltinFormats}.
    * <p>
    * if empty, default is "General"
    *
-   * @see DataFormat
+   * @see org.apache.poi.ss.usermodel.DataFormat
    */
   String[] dataFormat() default {};
 
@@ -53,7 +53,7 @@ public @interface CellStyle {
 
   /**
    * Is "Quote Prefix" or "123 Prefix" enabled for the cell? Having this on is somewhat (but not
-   * completely, see {@link IgnoredErrorType}) like prefixing the cell value with a ' in Excel
+   * completely, see {@link org.apache.poi.ss.usermodel.IgnoredErrorType}) like prefixing the cell value with a ' in Excel
    * <p>
    * if empty, default is false
    */
@@ -187,7 +187,7 @@ public @interface CellStyle {
    * <p>
    * if empty, default is FillPatternType.NO_FILL
    *
-   * @return the fill pattern, default value is {@link FillPatternType#NO_FILL}
+   * @return the fill pattern, default value is {@link org.apache.poi.ss.usermodel.FillPatternType#NO_FILL}
    * @since POI 4.0.0
    */
   FillPatternType[] fillPattern() default {};

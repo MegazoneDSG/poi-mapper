@@ -10,11 +10,12 @@ import com.mz.poi.mapper.annotation.Match;
 import com.mz.poi.mapper.annotation.Row;
 import com.mz.poi.mapper.annotation.Sheet;
 import com.mz.poi.mapper.structure.CellType;
-import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -26,79 +27,79 @@ import lombok.Setter;
 )
 public class MatchTemplate {
 
-  @Sheet(
-      name = "Test",
-      index = 0
-  )
-  private TestSheet sheet = new TestSheet();
+    @Sheet(
+        name = "Test",
+        index = 0
+    )
+    private TestSheet sheet = new TestSheet();
 
-  @Builder
-  public MatchTemplate(TestSheet sheet) {
-    this.sheet = sheet;
-  }
+    @Builder
+    public MatchTemplate(TestSheet sheet) {
+        this.sheet = sheet;
+    }
 
-  @Getter
-  @Setter
-  @NoArgsConstructor
-  public static class TestSheet {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class TestSheet {
 
-    @DataRows(
-        row = 0,
-        match = Match.STOP_ON_BLANK,
-        headers = {
-            @Header(name = "a", mappings = {"firstValue"}),
-            @Header(name = "b", mappings = {"secondValue"})
+        @DataRows(
+            row = 0,
+            match = Match.STOP_ON_BLANK,
+            headers = {
+                @Header(name = "a", mappings = {"firstValue"}),
+                @Header(name = "b", mappings = {"secondValue"})
+            }
+        )
+        private List<MatchTestDataRow> matchTestTable;
+
+        @Row(
+            rowAfter = "matchTestTable",
+            rowAfterOffset = 1
+        )
+        private MatchTestRow matchTestRow = new MatchTestRow();
+
+        @Builder
+        public TestSheet(
+            List<MatchTestDataRow> matchTestTable) {
+            this.matchTestTable = matchTestTable;
         }
-    )
-    private List<MatchTestDataRow> matchTestTable;
-
-    @Row(
-        rowAfter = "matchTestTable",
-        rowAfterOffset = 1
-    )
-    private MatchTestRow matchTestRow = new MatchTestRow();
-
-    @Builder
-    public TestSheet(
-        List<MatchTestDataRow> matchTestTable) {
-      this.matchTestTable = matchTestTable;
     }
-  }
 
 
-  @Getter
-  @Setter
-  @NoArgsConstructor
-  public static class MatchTestDataRow {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class MatchTestDataRow {
 
-    @Cell(
-        column = 0,
-        cellType = CellType.STRING
-    )
-    private String firstValue;
+        @Cell(
+            column = 0,
+            cellType = CellType.STRING
+        )
+        private String firstValue;
 
-    @Cell(
-        column = 1,
-        cellType = CellType.NUMERIC
-    )
-    private Integer secondValue;
+        @Cell(
+            column = 1,
+            cellType = CellType.NUMERIC
+        )
+        private Integer secondValue;
 
-    @Builder
-    public MatchTestDataRow(String firstValue, Integer secondValue) {
-      this.firstValue = firstValue;
-      this.secondValue = secondValue;
+        @Builder
+        public MatchTestDataRow(String firstValue, Integer secondValue) {
+            this.firstValue = firstValue;
+            this.secondValue = secondValue;
+        }
     }
-  }
 
-  @Getter
-  @Setter
-  @NoArgsConstructor
-  public static class MatchTestRow {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class MatchTestRow {
 
-    @Cell(
-        column = 0,
-        cellType = CellType.STRING
-    )
-    private String value = "sample";
-  }
+        @Cell(
+            column = 0,
+            cellType = CellType.STRING
+        )
+        private String value = "sample";
+    }
 }

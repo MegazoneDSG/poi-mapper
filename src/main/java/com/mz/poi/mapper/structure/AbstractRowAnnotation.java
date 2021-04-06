@@ -9,7 +9,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public abstract class AbstractRowAnnotation {
 
-  private int row;
-  private String rowAfter;
-  private int rowAfterOffset;
+    private int row;
+    private String rowAfter;
+    private int rowAfterOffset;
 }

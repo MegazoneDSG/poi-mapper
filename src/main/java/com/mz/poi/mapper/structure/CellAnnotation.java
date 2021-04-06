@@ -10,14 +10,14 @@ import lombok.Setter;
 @NoArgsConstructor
 public class CellAnnotation extends AbstractCellAnnotation {
 
-  public CellAnnotation(Cell cell, CellStyleAnnotation rowStyle) {
-    this.setColumn(cell.column());
-    this.setCols(cell.cols());
-    this.setColumnAfter(cell.columnAfter());
-    this.setColumnAfterOffset(cell.columnAfterOffset());
-    this.setCellType(cell.cellType());
-    this.setIgnoreParse(cell.ignoreParse());
-    this.setRequired(cell.required());
-    this.setStyle(new CellStyleAnnotation(cell.style(), rowStyle));
-  }
+    public CellAnnotation(Cell cell, CellStyleAnnotation rowStyle) {
+        this.setColumn(cell.column());
+        this.setCols(cell.cols());
+        this.setColumnAfter(cell.columnAfter());
+        this.setColumnAfterOffset(cell.columnAfterOffset());
+        this.setCellType(cell.cellType());
+        this.setIgnoreParse(cell.ignoreParse());
+        this.setRequired(cell.required());
+        this.setStyle(new CellStyleAnnotation(cell.style(), rowStyle));
+    }
 }

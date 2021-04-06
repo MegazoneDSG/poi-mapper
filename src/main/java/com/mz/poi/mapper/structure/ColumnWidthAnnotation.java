@@ -10,11 +10,11 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ColumnWidthAnnotation {
 
-  private int column;
-  private int width;
+    private int column;
+    private int width;
 
-  public ColumnWidthAnnotation(ColumnWidth columnWidth) {
-    this.column = columnWidth.column();
-    this.width = columnWidth.width();
-  }
+    public ColumnWidthAnnotation(ColumnWidth columnWidth) {
+        this.column = columnWidth.column();
+        this.width = columnWidth.width();
+    }
 }

@@ -10,19 +10,19 @@ import lombok.Setter;
 @NoArgsConstructor
 public class RowAnnotation extends AbstractRowAnnotation {
 
-  private boolean useRowHeightInPoints = false;
-  private int heightInPoints;
-  private CellStyleAnnotation defaultStyle;
+    private boolean useRowHeightInPoints = false;
+    private int heightInPoints;
+    private CellStyleAnnotation defaultStyle;
 
-  public RowAnnotation(Row row, CellStyleAnnotation sheetStyle) {
-    this.setRow(row.row());
-    this.setRowAfter(row.rowAfter());
-    this.setRowAfterOffset(row.rowAfterOffset());
+    public RowAnnotation(Row row, CellStyleAnnotation sheetStyle) {
+        this.setRow(row.row());
+        this.setRowAfter(row.rowAfter());
+        this.setRowAfterOffset(row.rowAfterOffset());
 
-    if (row.heightInPoints().length > 0) {
-      this.useRowHeightInPoints = true;
-      this.heightInPoints = row.heightInPoints()[0];
+        if (row.heightInPoints().length > 0) {
+            this.useRowHeightInPoints = true;
+            this.heightInPoints = row.heightInPoints()[0];
+        }
+        this.defaultStyle = new CellStyleAnnotation(row.defaultStyle(), sheetStyle);
     }
-    this.defaultStyle = new CellStyleAnnotation(row.defaultStyle(), sheetStyle);
-  }
 }

@@ -7,7 +7,6 @@ import com.mz.poi.mapper.annotation.Font;
 import com.mz.poi.mapper.annotation.Header;
 import com.mz.poi.mapper.annotation.Match;
 import com.mz.poi.mapper.annotation.Row;
-import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,6 +14,8 @@ import lombok.Setter;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.IndexedColors;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -51,7 +52,7 @@ public class ArrayCellSheet {
 
   @Builder
   public ArrayCellSheet(List<ItemRow> itemTable,
-      SummaryRow summaryRow) {
+                        SummaryRow summaryRow) {
     this.itemTable = itemTable;
     this.summaryRow = summaryRow;
   }

@@ -1,11 +1,14 @@
 package com.mz.poi.mapper.annotation;
 
+import org.apache.poi.ss.usermodel.IndexedColors;
+
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import org.apache.poi.ss.usermodel.IndexedColors;
 
+@Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE})
 public @interface Font {

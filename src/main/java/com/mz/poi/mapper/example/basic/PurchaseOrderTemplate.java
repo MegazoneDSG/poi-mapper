@@ -21,19 +21,19 @@ import lombok.Setter;
 )
 public class PurchaseOrderTemplate {
 
-  @Sheet(
-      name = "Order",
-      index = 0,
-      columnWidths = {
-          @ColumnWidth(column = 0, width = 25)
-      },
-      defaultColumnWidth = 20,
-      defaultRowHeightInPoints = 20
-  )
-  private OrderSheet sheet = new OrderSheet();
+    @Sheet(
+        name = "Order",
+        index = 0,
+        columnWidths = {
+            @ColumnWidth(column = 0, width = 25)
+        },
+        defaultColumnWidth = 20,
+        defaultRowHeightInPoints = 20
+    )
+    private OrderSheet sheet = new OrderSheet();
 
-  @Builder
-  public PurchaseOrderTemplate(OrderSheet sheet) {
-    this.sheet = sheet;
-  }
+    @Builder
+    public PurchaseOrderTemplate(OrderSheet sheet) {
+        this.sheet = sheet;
+    }
 }

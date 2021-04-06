@@ -8,22 +8,22 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class ReadExceptionAddress {
-  private Integer sheet;
-  private Integer row;
-  private Integer column;
+    private Integer sheet;
+    private Integer row;
+    private Integer column;
 
-  public ReadExceptionAddress(Integer sheet) {
-    this.sheet = sheet;
-  }
+    public ReadExceptionAddress(Integer sheet) {
+        this.sheet = sheet;
+    }
 
-  public ReadExceptionAddress(Integer sheet, Integer row) {
-    this.sheet = sheet;
-    this.row = row;
-  }
+    public ReadExceptionAddress(Integer sheet, Integer row) {
+        this.sheet = sheet;
+        this.row = row;
+    }
 
-  public ReadExceptionAddress(Integer sheet, Integer row, Integer column) {
-    this.sheet = sheet;
-    this.row = row;
-    this.column = column;
-  }
+    public ReadExceptionAddress(Integer sheet, Integer row, Integer column) {
+        this.sheet = sheet;
+        this.row = row;
+        this.column = column;
+    }
 }

@@ -360,9 +360,10 @@ This is the CellType enums. If the model class does not match CellType, it will 
 
 | option  | Matching Java Class | description |
 |------------|--------|--------|
+| NONE | Any | When creating Excel, do not assign a specific cell type to the cell. |
 | STRING | String | -  |
 | NUMERIC | Double,Float,Long,Short,BigDecimal,BigInteger,Integer | - |
-| BLANK | None | Ignore convert |
+| BLANK | None | When creating an Excel, it becomes an empty cell, and the value is not converted when reading the Excel. |
 | BOOLEAN | Boolean | - |
 | DATE | LocalDate,LocalDateTime | - |
 | FORMULA | String | You can use the [FormulaAddressExpression](#FormulaAddressExpression) to write native formulas in Excel with specific cell locations in the model. |

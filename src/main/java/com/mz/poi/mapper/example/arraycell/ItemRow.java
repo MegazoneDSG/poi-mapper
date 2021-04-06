@@ -4,14 +4,15 @@ import com.mz.poi.mapper.annotation.ArrayCell;
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.CellStyle;
 import com.mz.poi.mapper.structure.CellType;
-import java.math.BigDecimal;
-import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.IndexedColors;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
