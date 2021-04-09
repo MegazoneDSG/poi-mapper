@@ -383,7 +383,9 @@ public class ExcelReader {
         if (isDate && (CellType.NONE.equals(cellType) || CellType.DATE.equals(cellType))) {
 
             Date cellValue = cell.getDateCellValue();
-            if (LocalDateTime.class.isAssignableFrom(cellClass)) {
+            if (cellValue == null) {
+                return null;
+            } else if (LocalDateTime.class.isAssignableFrom(cellClass)) {
                 return DateFormatHelper.getLocalDateTime(cellValue,
                     this.structure.getAnnotation().getDateFormatZoneId());
             } else if (LocalDate.class.isAssignableFrom(cellClass)) {

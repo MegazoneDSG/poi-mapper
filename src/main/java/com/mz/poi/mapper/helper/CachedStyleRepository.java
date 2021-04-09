@@ -6,21 +6,20 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CachedStyleRepository {
     private Workbook workbook;
-    private Map<String, CellStyle> cachedDataRowStyle = new HashMap<>();
+    private Map<String, CellStyle> cachedDataRowStyle = new ConcurrentHashMap<>();
 
     public CachedStyleRepository(Workbook workbook) {
         this.workbook = workbook;
     }
 
     public CellStyle createStyle(CellStyleAnnotation annotation) {
-        return Optional.ofNullable(this.getStyle(annotation.getKey()))
-            .orElse(this.createNewStyle(annotation));
+        CellStyle style = this.getStyle(annotation.getKey());
+        return style == null ? this.createNewStyle(annotation) : style;
     }
 
     private CellStyle createNewStyle(CellStyleAnnotation annotation) {
@@ -46,3 +45,4 @@ public class CachedStyleRepository {
         return cachedDataRowStyle.size();
     }
 }
+
