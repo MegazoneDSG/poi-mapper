@@ -30,4 +30,6 @@ public @interface ArrayCell {
   CellStyle style() default @CellStyle;
 
   int size() default 0;
+
+  Constraint constraint() default @Constraint;
 }

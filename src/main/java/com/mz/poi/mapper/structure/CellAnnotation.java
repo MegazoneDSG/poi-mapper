@@ -19,5 +19,6 @@ public class CellAnnotation extends AbstractCellAnnotation {
         this.setIgnoreParse(cell.ignoreParse());
         this.setRequired(cell.required());
         this.setStyle(new CellStyleAnnotation(cell.style(), rowStyle));
+        this.setConstraint(new ConstraintAnnotation(cell.constraint()));
     }
 }

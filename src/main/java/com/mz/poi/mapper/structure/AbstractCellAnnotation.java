@@ -17,6 +17,7 @@ public class AbstractCellAnnotation {
     private boolean ignoreParse;
     private boolean required;
     private CellStyleAnnotation style;
+    private ConstraintAnnotation constraint;
 
     public int getColumnSize() {
         if (this instanceof ArrayCellAnnotation) {

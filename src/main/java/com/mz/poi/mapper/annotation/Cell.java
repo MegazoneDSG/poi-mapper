@@ -28,4 +28,6 @@ public @interface Cell {
   boolean required() default false;
 
   CellStyle style() default @CellStyle;
+
+  Constraint constraint() default @Constraint;
 }
