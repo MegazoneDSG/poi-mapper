@@ -1,6 +1,6 @@
 # !/bin/bash
 
-local_github_maven_repo='/Users/mz02-seungpilpark/IdeaProjects/MegazoneDSG/maven-repo'
+local_github_maven_repo='/Users/MZ02-SEUNGPILPARK/IdeaProjects/MegazoneDSG/maven-repo'
 
 ./gradlew publishToMavenLocal
 cp -R ~/.m2/repository/com/mz/poi-mapper ${local_github_maven_repo}/snapshots/com/mz
