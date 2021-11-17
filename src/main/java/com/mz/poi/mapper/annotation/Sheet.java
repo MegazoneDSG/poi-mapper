@@ -11,19 +11,23 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD})
 public @interface Sheet {
 
-  String name();
+	String name();
 
-  int index();
+	int index();
 
-  boolean protect() default false;
+	boolean protect() default false;
 
-  String protectKey() default "";
+	String protectKey() default "";
 
-  ColumnWidth[] columnWidths() default {};
+	boolean fitToPage() default false;
 
-  int defaultRowHeightInPoints() default 20;
+	PrintSetup printSetup() default @PrintSetup;
 
-  int defaultColumnWidth() default 20;
+	ColumnWidth[] columnWidths() default {};
 
-  CellStyle defaultStyle() default @CellStyle;
+	int defaultRowHeightInPoints() default 20;
+
+	int defaultColumnWidth() default 20;
+
+	CellStyle defaultStyle() default @CellStyle;
 }

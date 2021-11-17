@@ -18,6 +18,7 @@ import com.mz.poi.mapper.structure.CellType;
 import com.mz.poi.mapper.structure.DataRowsAnnotation;
 import com.mz.poi.mapper.structure.ExcelStructure;
 import com.mz.poi.mapper.structure.HeaderAnnotation;
+import com.mz.poi.mapper.structure.PrintSetupAnnotation;
 import com.mz.poi.mapper.structure.RowAnnotation;
 import com.mz.poi.mapper.structure.RowStructure;
 import com.mz.poi.mapper.structure.SheetAnnotation;
@@ -29,6 +30,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataValidation;
 import org.apache.poi.ss.usermodel.DataValidationConstraint;
 import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.usermodel.PrintSetup;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -80,9 +82,36 @@ public class ExcelGenerator {
 		).forEach(sheetStructure -> {
 			SheetAnnotation annotation = sheetStructure.getAnnotation();
 			Sheet sheet = this.workbook.createSheet(annotation.getName());
+
+			// PrintSetup
+			PrintSetupAnnotation annotationPrintSetup = annotation.getPrintSetup();
+			PrintSetup printSetup = sheet.getPrintSetup();
+			printSetup.setPaperSize(annotationPrintSetup.getPaperSize());
+			printSetup.setScale(annotationPrintSetup.getScale());
+			printSetup.setPageStart(annotationPrintSetup.getPageStart());
+			printSetup.setFitWidth(annotationPrintSetup.getFitWidth());
+			printSetup.setFitHeight(annotationPrintSetup.getFitHeight());
+			printSetup.setLeftToRight(annotationPrintSetup.isLeftToRight());
+			printSetup.setLandscape(annotationPrintSetup.isLandscape());
+			printSetup.setValidSettings(annotationPrintSetup.isValidSettings());
+			printSetup.setNoColor(annotationPrintSetup.isNoColor());
+			printSetup.setDraft(annotationPrintSetup.isDraft());
+			printSetup.setNotes(annotationPrintSetup.isNotes());
+			printSetup.setNoOrientation(annotationPrintSetup.isNoOrientation());
+			printSetup.setUsePage(annotationPrintSetup.isUsePage());
+			printSetup.setHResolution(annotationPrintSetup.getHResolution());
+			printSetup.setVResolution(annotationPrintSetup.getVResolution());
+			printSetup.setHeaderMargin(annotationPrintSetup.getHeaderMargin());
+			printSetup.setFooterMargin(annotationPrintSetup.getFooterMargin());
+			printSetup.setCopies(annotationPrintSetup.getCopies());
+
 			if (annotation.isProtect()) {
 				sheet.protectSheet(annotation.getProtectKey());
 			}
+			if (annotation.isFitToPage()) {
+				sheet.setFitToPage(annotation.isFitToPage());
+			}
+
 			sheet.setDefaultRowHeightInPoints(annotation.getDefaultRowHeightInPoints());
 			sheet.setDefaultColumnWidth(annotation.getDefaultColumnWidth());
 			annotation.getColumnWidths()

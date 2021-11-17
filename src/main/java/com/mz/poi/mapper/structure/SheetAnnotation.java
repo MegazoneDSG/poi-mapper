@@ -18,6 +18,8 @@ public class SheetAnnotation {
     private int index;
     private boolean protect;
     private String protectKey;
+    private boolean fitToPage;
+    private PrintSetupAnnotation printSetup;
     private List<ColumnWidthAnnotation> columnWidths = new ArrayList<>();
     private int defaultRowHeightInPoints;
     private int defaultColumnWidth;
@@ -28,6 +30,8 @@ public class SheetAnnotation {
         this.index = sheet.index();
         this.protect = sheet.protect();
         this.protectKey = sheet.protectKey();
+        this.fitToPage = sheet.fitToPage();
+        this.printSetup = new PrintSetupAnnotation(sheet.printSetup());
         Arrays.asList(sheet.columnWidths())
             .forEach(columnWidth -> this.columnWidths.add(
                 new ColumnWidthAnnotation(columnWidth)
