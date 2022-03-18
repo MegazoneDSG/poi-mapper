@@ -21,15 +21,6 @@ import lombok.Setter;
 )
 public class ArrayCellTemplate {
 
-  @Sheet(
-      name = "Order",
-      index = 0,
-      columnWidths = {
-          @ColumnWidth(column = 0, width = 25)
-      },
-      defaultColumnWidth = 20,
-      defaultRowHeightInPoints = 20
-  )
   private ArrayCellSheet sheet = new ArrayCellSheet();
 
   @Builder

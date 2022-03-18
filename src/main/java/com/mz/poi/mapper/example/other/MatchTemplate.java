@@ -27,10 +27,6 @@ import java.util.List;
 )
 public class MatchTemplate {
 
-    @Sheet(
-        name = "Test",
-        index = 0
-    )
     private TestSheet sheet = new TestSheet();
 
     @Builder
@@ -41,22 +37,14 @@ public class MatchTemplate {
     @Getter
     @Setter
     @NoArgsConstructor
+    @Sheet(
+            name = "Test",
+            index = 0
+    )
     public static class TestSheet {
 
-        @DataRows(
-            row = 0,
-            match = Match.STOP_ON_BLANK,
-            headers = {
-                @Header(name = "a", mappings = {"firstValue"}),
-                @Header(name = "b", mappings = {"secondValue"})
-            }
-        )
         private List<MatchTestDataRow> matchTestTable;
 
-        @Row(
-            rowAfter = "matchTestTable",
-            rowAfterOffset = 1
-        )
         private MatchTestRow matchTestRow = new MatchTestRow();
 
         @Builder
@@ -70,6 +58,14 @@ public class MatchTemplate {
     @Getter
     @Setter
     @NoArgsConstructor
+    @DataRows(
+            row = 0,
+            match = Match.STOP_ON_BLANK,
+            headers = {
+                    @Header(name = "a", mappings = {"firstValue"}),
+                    @Header(name = "b", mappings = {"secondValue"})
+            }
+    )
     public static class MatchTestDataRow {
 
         @Cell(
@@ -94,6 +90,10 @@ public class MatchTemplate {
     @Getter
     @Setter
     @NoArgsConstructor
+    @Row(
+            rowAfter = "matchTestTable",
+            rowAfterOffset = 1
+    )
     public static class MatchTestRow {
 
         @Cell(

@@ -2,6 +2,7 @@ package com.mz.poi.mapper.example.arraycell;
 
 import com.mz.poi.mapper.annotation.Cell;
 import com.mz.poi.mapper.annotation.CellStyle;
+import com.mz.poi.mapper.annotation.Row;
 import com.mz.poi.mapper.structure.CellType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,7 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 @Getter
 @Setter
 @NoArgsConstructor
+@Row(rowAfter = "itemTable")
 public class SummaryRow {
 
   @Cell(
